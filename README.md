@@ -101,17 +101,19 @@ This section is for the **LaunchPad Hacks** submission on the `launchpad` branch
 
 ### Windows quick start
 
-Paste this as **one line** into Windows PowerShell 5.1. It can be the window that opens in `C:\WINDOWS\System32`. You do not type `python`, `git`, `cd`, or `pip` yourself.
-
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/cmy-hulala/club-autopilot/launchpad/setup.ps1 | iex"
 ```
 
-The script installs Python 3.12 and Git with winget if they are missing, refreshes PATH in this window, ignores the Microsoft Store `python` alias, clones into `%USERPROFILE%\club-autopilot`, checks out `launchpad`, and on an existing clone runs `git pull --ff-only origin launchpad`. It creates `.venv`, installs dependencies, downloads Android platform-tools when `adb` is missing, installs Playwright Chromium, starts the site on port 5050, and opens http://127.0.0.1:5050/onboarding .
+Next time: double-click the Club Autopilot icon on your desktop.
+
+Paste that as **one line** into Windows PowerShell 5.1. It can be the window that opens in `C:\WINDOWS\System32`. You do not type `python`, `git`, `cd`, or `pip` yourself.
+
+The script installs Python 3.12 and Git with winget if they are missing, refreshes PATH in this window, ignores the Microsoft Store `python` alias, clones into `%USERPROFILE%\club-autopilot`, checks out `launchpad`, and on an existing clone runs `git pull --ff-only origin launchpad`. It creates `.venv`, installs dependencies, downloads Android platform-tools when `adb` is missing, installs Playwright Chromium, puts a **Club Autopilot** shortcut on the Desktop and in the Start Menu, starts the site on port 5050, and opens http://127.0.0.1:5050/onboarding . The shortcut runs `start.ps1`, which pulls `launchpad`, starts the server, and opens onboarding. Pasting the line again on a computer that already has the project creates the shortcut too.
 
 Leave the server window open. Closing it stops the site.
 
-Next time, from any folder:
+If the icon is missing, from any folder:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\club-autopilot\start.ps1"

@@ -41,6 +41,14 @@ def test_setup_ps1_is_a_powershell_51_installer():
     assert "club-autopilot-tools" in text
     assert "ClubAutopilot-private" in text
     assert "AUTOPILOT_PRIVATE_DIR" in text
+    assert "WScript.Shell" in text
+    assert "CreateShortcut" in text
+    assert "Club Autopilot.lnk" in text
+    assert "-ExecutionPolicy Bypass -File" in text
+    assert "favicon.ico" in text
+    assert "GetFolderPath('Desktop')" in text
+    assert "GetFolderPath('Programs')" in text
+    assert text.count("Install-LaunchShortcuts") >= 2
 
 
 def test_start_ps1_relaunches_onboarding():
@@ -65,3 +73,7 @@ def test_readme_leads_with_the_windows_one_liner():
     assert "start.ps1" in readme
     assert "Microsoft Store" in readme
     assert "System32" in readme
+    section = readme.split("### Windows quick start", 1)[1]
+    body = section.lstrip("\n")
+    assert body.startswith("```powershell\n" + ONE_LINER + "\n```")
+    assert "Next time: double-click the Club Autopilot icon on your desktop." in section

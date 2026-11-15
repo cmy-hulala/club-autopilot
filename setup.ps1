@@ -258,6 +258,54 @@ if ($PSScriptRoot) {
         return (Join-Path $homeDir 'ClubAutopilot-private')
     }
 
+    function Install-LaunchShortcuts([string]$Repo) {
+        # Overwrites the same .lnk names, so running setup again does not pile up copies.
+        if ([string]::IsNullOrWhiteSpace($Repo)) { return }
+        $start = Join-Path $Repo 'start.ps1'
+        if (-not (Test-Path -LiteralPath $start)) {
+            Say "找不到 start.ps1，這次沒有建立捷徑。 / start.ps1 was not found, so no shortcut was created."
+            return
+        }
+        $icon = Join-Path $Repo 'assets\favicon.ico'
+        $psExe = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        $desktop = [Environment]::GetFolderPath('Desktop')
+        if ([string]::IsNullOrWhiteSpace($desktop)) {
+            $homeDir = $HOME
+            if (-not $homeDir) { $homeDir = $env:USERPROFILE }
+            $desktop = Join-Path $homeDir 'Desktop'
+        }
+        $programs = [Environment]::GetFolderPath('Programs')
+        if ([string]::IsNullOrWhiteSpace($programs)) {
+            $programs = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
+        }
+        $targets = @(
+            (Join-Path $desktop 'Club Autopilot.lnk'),
+            (Join-Path $programs 'Club Autopilot.lnk')
+        )
+        try {
+            $shell = New-Object -ComObject WScript.Shell
+            foreach ($lnkPath in $targets) {
+                $folder = Split-Path -Parent $lnkPath
+                if (-not (Test-Path -LiteralPath $folder)) {
+                    New-Item -ItemType Directory -Path $folder | Out-Null
+                }
+                $lnk = $shell.CreateShortcut($lnkPath)
+                $lnk.TargetPath = $psExe
+                $lnk.Arguments = '-ExecutionPolicy Bypass -File "' + $start + '"'
+                $lnk.WorkingDirectory = $Repo
+                $lnk.WindowStyle = 1
+                $lnk.Description = 'Club Autopilot'
+                if (Test-Path -LiteralPath $icon) {
+                    $lnk.IconLocation = $icon + ',0'
+                }
+                $lnk.Save()
+            }
+            Say "已建立桌面與開始功能表的「Club Autopilot」。下次雙擊桌面圖示即可。 / Created Club Autopilot on the Desktop and in the Start Menu. Double-click the desktop icon next time."
+        } catch {
+            Say "捷徑沒有建立。 / The shortcut was not created: $($_.Exception.Message)"
+        }
+    }
+
     Say "Club Autopilot 安裝程式 / Club Autopilot setup (launchpad)"
     $alias = Get-Command python -ErrorAction SilentlyContinue
     if ($alias -and (Test-StoreAlias $alias.Source)) {
@@ -285,6 +333,7 @@ if ($PSScriptRoot) {
     }
 
     if (Test-OnboardingUp) {
+        if ($existing) { Install-LaunchShortcuts $existing }
         Say "網站已經在跑，正在打開初次設定。 / The site is already running. Opening the onboarding page."
         Open-Onboarding
         Say "重新貼上這一行會把已有的專案更新到最新的 launchpad。若伺服器還開著，請先關掉那個視窗再貼一次，網站才會用新程式。 / Pasting this line again updates an existing clone to the latest launchpad. If the server window is still open, close it and paste the line again so the site restarts."
@@ -332,6 +381,7 @@ if ($PSScriptRoot) {
     }
     Set-Location -LiteralPath $repo
     Say "專案位置：$repo / Project folder: $repo"
+    Install-LaunchShortcuts $repo
 
     $python = Find-RealPython
     if (-not $python) {
@@ -418,7 +468,7 @@ if ($PSScriptRoot) {
             Open-Onboarding
             Say "已打開初次設定 / Opened $OnboardingUrl"
             Say "請讓伺服器視窗保持開啟。關掉它，網站就停了。 / Leave the server window open. Closing it stops the site."
-            Say "下次只想重新打開，請執行 start.ps1。 / Next time, run start.ps1 in this folder to open it again."
+            Say "下次雙擊桌面上的 Club Autopilot 圖示。 / Next time, double-click the Club Autopilot icon on your desktop."
             return
         }
         Start-Sleep -Seconds 1
