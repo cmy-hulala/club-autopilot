@@ -1,0 +1,26 @@
+📣 {{ session_label }}預告｜{{ title }}
+
+{{ hook }}
+{{ hook_lead }}
+
+▍活動資訊
+🗓️ 日期：{{ md_week }}
+🕖 時間：{{ time_range }}
+📍 地點：{{ location }}
+🎤 講者：{{ speaker.name }}｜{{ speaker.title }}
+💰 參加費：社員免費；非社員 NT$300；幹部邀請優惠
+
+▍社課內容
+{% for h in highlights %}({{ loop.index }}) {{ h.title }}
+{% endfor %}
+▍活動流程
+{% for s in schedule %}{{ s[0] }}–{{ s[1] }}｜{{ s[2] }}
+{% endfor %}
+▍報名
+👉 花 1 分鐘填寫課前表單：
+{{ short_url }}
+📝 報名截止：{{ deadline_text }}
+
+{{ md }} 晚上，{{ room }} 見 🙌
+✨ {{ slogan1 }}
+{{ slogan2 }}

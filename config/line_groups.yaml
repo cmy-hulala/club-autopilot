@@ -1,0 +1,7 @@
+# LINE 「直接發送」的目標群組。公開 repo 不放真的 groupId。
+# 真的群組放在本機私密設定（不進 repo），任一種即可：
+#   - 環境變數 LINE_GROUP_IDS=C...,C...
+#   - %USERPROFILE%\創創社-私密\line\line_bot.json 的 "group_ids"
+#   - %USERPROFILE%\創創社-私密\autopilot_local.yaml 的 line_groups: [{name: ..., id: C...}]
+# channel access token 是機密：只放環境變數 LINE_CHANNEL_ACCESS_TOKEN 或 line_bot.json。
+groups: []

@@ -1,0 +1,22 @@
+# 課後表單規格｜{{ session_label }}（{{ md_week }}）
+
+- **表單標題：** {{ feedback_form_title }}
+- **收集 Email：** 是
+
+| # | 題目 | 題型 | 必填 |
+|---|---|---|---|
+| 1 | 姓名 | 簡答 | 是 |
+| — | 活動滿意度調查 | 區塊 | — |
+{% for fq in feedback_questions %}| {{ loop.index + 1 }} | {{ fq }} | 1–10 | 是 |
+{% endfor %}| {{ feedback_questions|length + 2 }} | 整體而言，您對於活動的滿意度為？ | 1–10 | 是 |
+| {{ feedback_questions|length + 3 }} | 這次活動中，你認為可以更好的地方？ | 段落 | 否 |
+
+## 確認訊息
+
+`{{ feedback_confirmation }}`
+
+## 課後表單填寫網址（課後信按鈕）
+
+{{ feedback_url }}
+
+Banner：同課前表單（調色盤 → Header）。

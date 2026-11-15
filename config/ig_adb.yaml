@@ -1,0 +1,100 @@
+# 「存成 IG 草稿（手機）」設定。座標以 HTC U23 pro 1080x2400 量測，2026-11-15 實測成功存成草稿。
+# 換手機或 IG 改版時只改這裡。絕不點「分享」：程式會在每次點擊前讀畫面，點到分享／Share 就停止。
+adb: '%LOCALAPPDATA%\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v5.0.1\adb.exe'
+scrcpy_args: ["--no-audio", "--max-size=800"]
+scrcpy: '%LOCALAPPDATA%\Microsoft\WinGet\Packages\Genymobile.scrcpy_Microsoft.Winget.Source_8wekyb3d8bbwe\scrcpy-win64-v5.0.1\scrcpy.exe'
+screen: [1080, 2400]
+remote_dir: /sdcard/Pictures/VentureCrew
+package: com.instagram.android
+wait_s: 2.5
+# 快速模式：設定檔裡量過的座標直接點（不再每點一次就讀畫面），只在檢查點讀一次畫面、只留最後截圖。
+# 檢查點對不上時才改用找字定位，並把新位置記在 out/_ig_learned.yaml。
+fast: true
+fast_wait_s: 1.0
+fast_shots: []
+# guard: true 的步驟（下一步／完成）位置可能在流程走錯時變成「分享」，快速模式也照樣先讀畫面確認。
+# 不能點的字（點擊前若該位置是這些按鈕就中止）
+forbidden_text: ["分享", "Share", "發佈", "發布", "Post", "移除", "Remove"]
+music_remove_text: ["移除音樂", "移除音訊", "移除", "Remove"]
+# 加音樂（只加 dashboard 設定的歌；找不到就回報「IG 找不到這首歌」，不改選別首）。
+# 2026-11-15 在限動音樂編輯器實測：片段長度是圓圈數字→滾輪（5～45 秒），開始時間用波形拖曳＋進度條回讀。
+# 貼文的音樂編輯器還沒實測，若畫面不同請看 05c/05d/05e 截圖調整。
+music:
+  open_xy: [540, 175]          # 找不到音樂標籤時，編輯畫面上方的音樂按鈕
+  search_text: ["搜尋音樂", "搜尋……", "搜尋", "Search music", "Search"]
+  done_text: ["完成", "Done"]
+  search_wait_s: 3.5
+  scrub_x: 540                 # 波形拖曳起點
+  scrub_y: 1925                # 波形那一列（music_scrubber 1859–1992）
+  px_per_s: 9                  # 波形每秒約 9 px（實測 380 px ≈ 42 秒…程式每拖一次會重新估）
+  start_tolerance_s: 2
+  start_tries: 6
+  bar: {x0: 213, x1: 866, handle_y: 1748}   # 上方進度條；白色把手位置 = 片段開始 / 歌曲長度
+  picker_xy: [540, 1829]       # 長度滾輪中間（numberpicker_input）
+  picker_row_px: 194           # 滾輪一格高度：慢速拖一格 = 1 秒
+  picker_max_flings: 15
+  swipe_ms: 1200
+  close_backs: 3                # 鍵盤 → 搜尋結果 → 音樂頁，每按一次都會先看是否已回到編輯畫面
+draft_text: ["儲存草稿", "Save draft", "存成草稿"]
+max_back: 4
+# 依序執行；每個 shot 都會存到 out/<slug>/ig_shots/ 給你在儀表板確認。
+steps:
+  - {do: launch}
+  - {do: shot, name: 01_open}
+  - {do: tap, name: 新貼文 +（建立）, xy: [60, 175], wait: 1.5}
+  - {do: shot, name: 02_new_post}
+  # 圖片照 ig_04→ig_01 的順序推上手機，最新的 ig_01（封面）在圖庫第 2 格（第 1 格是相機，不要點）。
+  # 開新貼文時 ig_01 已自動選取，所以不用再點封面；直接按原始比例。
+  - {do: tap, name: 原始比例（變更裁切）, xy: [75, 1253]}
+  - {do: shot, name: 03_cover_ratio}
+  - {do: tap, name: 選擇（多選）, xy: [965, 1396], wait: 0.5}
+  - {do: tap, name: ig_02, xy: [675, 1600]}
+  - {do: tap, name: ig_03, xy: [944, 1600]}
+  - {do: tap, name: ig_04, xy: [136, 1869]}
+  - {do: shot, name: 04_selected}
+  - {do: tap, name: 下一步, xy: [977, 178], wait: 1.5, guard: true}
+  # 編輯頁：先移除 IG 自動掛的歌（只是「建議音訊」就不點），再只加 dashboard「IG 音樂 › 貼文」設定的歌。
+  - {do: shot, name: 05_edit}
+  - {do: no_music}
+  # 編輯頁的音訊標籤只會套用 IG 建議的歌（沒有搜尋），所以音樂改在文案頁「新增音樂」加（2026-11-15 實測）。
+  - {do: tap, name: 下一步, xy: [949, 2198], wait: 1.5, guard: true}
+  - {do: shot, name: 06_caption_screen}
+  - {do: caption_music}        # 只加 dashboard「IG 音樂 › 貼文」設定的歌；沒設定就不加
+  - {do: tap, name: 文案欄, xy: [187, 980]}
+  - {do: paste_caption}
+  - {do: shot, name: 07_caption}
+  - {do: tap, name: 完成（✓）, xy: [989, 179], wait: 1.0, guard: true}
+  - {do: shot, name: 07b_caption_done}
+  # 按返回兩次會跳出「重新開始？」對話框，程式找「儲存草稿」字樣點下去。
+  - {do: save_draft}
+  - {do: shot, name: 08_saved}
+  - {do: tap, name: 草稿分頁（確認）, xy: [333, 1396]}
+  - {do: shot, name: 09_drafts}
+  - {do: tap, name: 取消（離開新貼文）, xy: [71, 179]}
+
+# 「轉發貼文到限動（手機）」：貼文要先由你自己發佈。2026-11-15 在既有社團貼文上實測（測完捨棄，沒有分享）。
+# 這台 IG 離開限動編輯只有「捨棄／繼續編輯」，沒有限動草稿 → 程式停在編輯畫面，由你在手機上按「限時動態」。
+story:
+  profile_tab_xy: [972, 2200]      # 沒填 ig.post_url 時：個人檔案 → 第一則非置頂貼文
+  add_to_story_xy: [112, 2045]     # 傳送選單左下「新增到限時動態」（這個畫面讀不到，用座標；旁邊的「分享」在 x≈507）
+  link_text: 報名表單              # 連結貼圖上顯示的字（留空＝顯示網址網域）
+  pos:                             # 2026-11-15 實測的位置（限動編輯畫面，1080x2400）；快速模式直接點
+    sticker_tool: [993, 327]       # 右側「貼圖」
+    link_sticker: [839, 1301]      # 貼圖列表「連結」
+    url_field: [540, 533]          # 新增連結：網址欄
+    cta_row: [243, 746]            # 「自訂貼圖文字」
+    cta_field: [540, 809]          # 貼圖文字欄
+    link_done: [1009, 375]         # 新增連結右上 ✓
+    music_tool: [993, 459]         # 右側「音樂」
+  # 按讚／轉發：貼文頁這列讀不到元素，用截圖找列（row），已按讚＝紅心、已轉發＝圖示裡有勾；已開就不再按
+  sticker_margin: 6                # 連結貼圖貼齊貼文右上角，往內縮幾 px
+  place_tries: 3
+  scale_range: [0.7, 0.85]         # IG 轉發預設貼文寬 80%（864/1080），四周有模糊底色邊框
+  row:                             # 貼文頁 ♥ 💬 ⟲ ✈ … 🔖 這一列（用截圖像素找，因為這頁 uiautomator 讀不到）
+    heart_x: 62
+    comment_x: 205
+    repost_x: 283
+    share_x: 437
+    bookmark_x: 1017
+    scan_from: 1200
+    scan_to: 2300

@@ -1,0 +1,8 @@
+# 自訂規則：可在儀表板「新增規則」加入，也可直接編輯這個檔案。
+# 欄位：
+#   name     規則名稱（顯示在儀表板）
+#   target   all | email | line | ig | form | 檔名開頭（例如 2_）
+#   kind     forbid（不能出現）| require（一定要出現）
+#   pattern  文字；regex: true 時當正規表示式
+#   level    error | warn
+rules: []

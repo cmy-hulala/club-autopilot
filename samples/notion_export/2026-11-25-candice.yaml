@@ -1,0 +1,73 @@
+# Notion「📣 Marketing」11/25 區塊的離線匯出（Notion 權杖未設定時，儀表板「匯入」讀這份）。
+# 匯出時間：2026-11-13 版本。
+# assumed 裡的欄位 Notion 沒寫，暫沿用前幾期做法，規則檢查會標黃提醒確認。
+club:
+  name_zh: 國立陽明交通大學創新創業社
+  name_en: NYCU Innovation & Entrepreneurship Club
+  short: 陽明交大創創社
+  email: nycu.iec@gmail.com
+  instagram: https://www.instagram.com/nycu_entrepreneurship_club/
+  ig_handle: "@nycu_entrepreneurship_club"
+  logo_url: https://ci3.googleusercontent.com/mail-sig/AIorK4w5gSoYzgaAuro6S53z48QuzR22KQLFUZblD3Qo8SOvK67RsvSANL2NSpM35Xl4bc-kHtOnXkMO4cGs
+  linktree_url: https://linktr.ee/nycuiec
+
+semester: 115-1
+session_no: 6
+title: 從職涯迷惘、自媒體探索，到一人創業：AI 時代打造不可取代的競爭力
+short_title: 從職涯迷惘到一人創業
+speaker:
+  name: 謝慈 Candice
+  name_zh: 謝慈
+  title: 行銷 x 斜槓大小事創辦人
+  other_roles: [靈島者學院合作講師]
+  links:
+    instagram: https://www.instagram.com/candice_clife/
+    website: https://candiceclife.com/
+date: 2026-11-25
+start: "19:00"
+end: "21:30"
+campus: 陽明交通大學光復校區
+room: 交映樓 703
+deadline: 2026-11-24 23:59
+schedule:
+  - ["19:00", "19:20", 開場、破冰]
+  - ["19:20", "20:30", 主題演講]
+  - ["20:30", "21:00", QA]
+  - ["21:00", "21:30", 會後交流]
+hook: 在最迷惘的 20 幾歲，應該如何找到自己的職涯方向？
+hook_lead: "{session}，我們邀請到「行銷 x 斜槓大小事」創辦人謝慈 Candice，分享她畢業不到六年，從大公司、新創走到一人公司的職涯大轉彎。"
+intro:
+  - 謝慈 Candice 是「行銷 x 斜槓大小事」創辦人，也是靈島者學院合作講師。
+  - 從大公司、新創、再到一人公司，畢業不到六年的時間，她的職涯方向大轉彎。這次她會分享自己從 20 幾歲超級迷惘，到堅定自己想做的路的心路歷程。
+  - 她從大學時期開始經營自媒體，五年後成為開課講師與行銷顧問，一步步靠著接案、自媒體，從沒資源、沒人脈的超級素人闖出自己的一條路。
+highlights:
+  - title: 從大公司、新創、再到一人公司，畢業不到六年的時間，職涯方向為什麼大轉彎？
+    body: 在最迷惘的 20 幾歲，應該如何找到自己的職涯方向，究竟怎麼樣才是「正確」的選擇呢？分享 Candice 從 20 幾歲超級迷惘，到堅定自己想做的路的心路歷程。
+  - title: 沒資源、沒人脈，想創業該如何踏出第一步？
+    body: 從大學時期開始經營自媒體，五年後成為開課講師與行銷顧問，分享如何從沒資源、沒人脈的超級素人，一步步靠著接案、自媒體闖出自己的一條路。
+  - title: AI 時代下，有什麼是不可取代的護城河
+    body: AI 時代之下，好像什麼技能都會被取代，對於想創業的人來說，有哪一些硬實力或軟實力是在這個快速變化的時代不可取代的護城河呢？
+closing: 一起聊聊在 AI 時代，怎麼打造別人拿不走的競爭力。
+feedback_questions:
+  - 我對於如何在迷惘中找到自己的職涯方向，有更具體的想法
+  - 我更了解沒資源、沒人脈時，如何踏出一人創業的第一步
+# 真的建表後由程式回填；沒有就用佔位符，規則檢查會提醒
+form_url: ""
+form_short_url: ""
+feedback_prefill_url: ""
+slides_url: ""
+photo: assets/speaker_2026-11-25.jpg
+canva:
+  template_design_id: DAHSJ-8pyXw   # 社團 IG 模板（115創創招說會），原檔不動
+  pages: [1, 2, 3, 4]
+  qr_page: 4                  # 課前表單 QR，建表後自動換成新網址
+  exported_dir: assets/canva_export/2026-11-25
+assumed: [start, end, room, deadline, schedule, hook]
+notion_source: https://www.notion.so/   # club「📣 Marketing」page; real id kept out of the repo
+ig_card:   # Notion 上 IG 圖卡用的精簡文字
+  title: 從職涯迷惘到一人創業：AI 時代打造不可取代的競爭力
+  heads: [畢業不到六年，職涯為什麼大轉彎？, 沒資源沒人脈，怎麼起步？, AI 時代不可取代的護城河]
+  bodies:
+    - 從大公司、新創到一人公司，在最迷惘的 20 幾歲，怎麼找到自己的職涯方向？
+    - 從大學經營自媒體，到成為開課講師與行銷顧問，一個超級素人如何靠接案與自媒體闖出自己的路。
+    - 好像什麼技能都會被取代，想創業的人該培養哪些硬實力與軟實力？

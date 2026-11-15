@@ -1,0 +1,16 @@
+# The club IG template (DAHSJ-8pyXw) uses Canva stock images that export with a "Canva" watermark
+# on this account. Each one has a clean copy already in the club's Canva uploads; the Canva step
+# swaps them in on the NEW copy (update_fill) so the exported IG cards carry no watermark.
+# template asset id: clean upload asset id
+MAElxWljx8I: MAHa9H9Tm6s   # page background
+MAFvW5ALujQ: MAHa9FmPm9s   # desk top
+MAG3tgWukEc: MAHa9IpaWp0   # coffee cup
+MAB00tYbmSY: MAHa9BWTZzI   # notepaper
+MAG7vIn4ACk: MAHa9Mi8wjM   # tablet
+MACpaSYDIxk: MAHa9FZxGJs   # pen
+MAHAc-AwFmM: MAHa9GQP4Dg   # paper strip (highlights / schedule)
+MAGUlfN72TY: MAHa9KyUd28   # paper clip
+MAFaGHuA5rc: MAHa9K84jB4 reinsert   # paper clip (clean file is pre-rotated: delete + insert at 90°)
+MAFaGCdG_SQ: MAHa9Mky1GY reinsert   # paper clip (clean file is pre-rotated: delete + insert at 90°)
+# Certificate template (DAGzIgWU-E4)
+MAGz9E4s3Q8: MAHa-hRnfdo reinsert0   # gold medal (clean redraw: scripts/make_clean_medal.py); re-inserted uncropped

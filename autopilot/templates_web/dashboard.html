@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="{{ 'en' if lang == 'en' else 'zh-Hant' }}" data-lang="{{ lang or 'zh' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Autopilot · {{ ev.session_label if ev else "從 Notion 匯入" }}</title>
+<script>
+(function(){ try { var l = localStorage.getItem("lang"); if (l === "en" || l === "zh") { document.documentElement.dataset.lang = l;
+  document.cookie = "lang=" + l + ";path=/;max-age=31536000"; } } catch (e) {} })();
+</script>
+<style>
+html[data-lang="en"]:not(.i18n-ready) body{visibility:hidden}
+.langsw{margin-left:auto;display:flex;gap:4px}
+.langsw button{background:transparent;color:#bbb;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
+.langsw button.on{background:var(--gold-soft);color:#111;border-color:var(--gold-soft);font-weight:700}
+
+:root{
+  --bg:#f6f1e8; --card:#fff; --ink:#1a1a1a; --muted:#6b645a;
+  --line:#e6dfd2; --gold:#c98d17; --gold-soft:#e0b04a; --brown:#8a4f00;
+  --err:#b00020; --err-bg:#ffe5e5; --ok:#1b6b34; --ok-bg:#e3f6e8;
+  --warn:#7a5b00; --warn-bg:#fff3cd; --idle:#6b645a; --idle-bg:#f0ece4;
+  --run:#8a4f00; --run-bg:#fff1d0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.5}
+a{color:var(--brown)}
+header.top{background:#111;color:#fff;padding:16px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+header.top img{height:44px;background:#fff;border-radius:8px;padding:3px}
+header.top b{color:var(--gold-soft);font-size:20px}
+header.top .sub{color:#bbb;font-size:13px;margin-top:2px}
+main{max-width:1200px;margin:0 auto;padding:22px 20px 80px}
+.flash{background:var(--warn-bg);border:1px solid #e0c060;padding:10px 14px;border-radius:10px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+h2{margin:0 0 14px;font-size:17px;color:var(--brown);letter-spacing:.02em}
+h3{margin:18px 0 8px;font-size:15px}
+.muted{color:var(--muted);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.grid2{display:grid;grid-template-columns:1.1fr 1.4fr;gap:18px}
+@media (max-width:960px){.grid2{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--gold);color:#fff;border:0;border-radius:8px;padding:10px 18px;
+  font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;font-family:inherit}
+.btn:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.dark{background:#111}
+.btn.ghost{background:#fff;color:var(--brown);border:1px solid var(--gold)}
+.btn.sm{padding:6px 12px;font-size:13px}
+select,input,textarea{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:inherit;box-sizing:border-box;background:#fff}
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;max-width:560px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.dlg{padding:20px 22px}
+.lecture{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0 0 8px;cursor:pointer;font:inherit}
+.lecture:hover{border-color:var(--gold);background:#fffaf0}
+.lecture b{display:block;color:#111}
+.kv{display:grid;grid-template-columns:88px 1fr;gap:6px 12px;font-size:14px}
+.kv .k{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:#faf8f4;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat .n{font-size:26px;font-weight:800;color:#111;line-height:1.1}
+.stat .l{font-size:12px;color:var(--muted);margin-top:4px}
+.actions{display:flex;flex-direction:column;gap:8px}
+.action{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.action .name{font-weight:700}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.p-err{background:var(--err-bg);color:var(--err)}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-idle{background:var(--idle-bg);color:var(--idle)}
+.p-run{background:var(--run-bg);color:var(--run)}
+.p-come{background:#eee;color:#555}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid #eee;padding:7px 8px;text-align:left;vertical-align:top}
+tr.error td{background:var(--err-bg);color:var(--err);font-weight:700}
+tr.warn td{background:var(--warn-bg)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit}
+.tabs button.on{background:#111;color:#fff;border-color:#111}
+iframe.preview,object.preview{width:100%;height:620px;border:1px solid var(--line);border-radius:10px;background:#fff;display:block}
+img.cert-img{width:100%;max-width:1000px;border-radius:10px;border:1px solid var(--line);background:#f3efe6;display:block}
+img.cert-img + object.cert-pdf{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:14px;border-radius:10px;font-size:14px;margin:0}
+.dl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.ig{display:flex;gap:12px;flex-wrap:wrap}
+.ig figure{flex:1 1 200px;max-width:260px;margin:0}
+.ig img{width:100%;border-radius:10px;border:1px solid var(--line);background:#111;display:block}
+.ig figcaption{margin-top:6px;text-align:center}
+.links a{display:inline-block;margin:0 10px 2px 0;font-size:13px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+@media (max-width:720px){.edit-grid,.stats,.action{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+.hidden{display:none}
+.action .no{width:24px;height:24px;border-radius:50%;background:#111;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.action.st-done .no{background:var(--ok)}
+.action.st-failed{border-color:var(--err);background:#fff8f8}
+.action.st-failed .no{background:var(--err)}
+.action.st-skipped .no{background:var(--warn)}
+.action.st-running{border-color:var(--gold)}
+.action .msg-failed{color:var(--err);font-weight:600}
+.runall{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.btn.big{padding:10px 22px;font-size:16px}
+.ok-mark{color:var(--ok);font-weight:800;font-size:18px;min-width:52px;text-align:center}
+.ig-list{margin:8px 0 0;padding-left:18px;font-size:13px;word-break:break-all}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.p-run{animation:pulse 1.2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<header class="top">
+  <img src="/asset/club_logo.png" alt="創創社">
+  <div>
+    <b>Club Autopilot</b> · 陽明交大創創社社課自動化
+  </div>
+  <div class="langsw" data-no-i18n><button type="button" data-setlang="zh">中文</button><button type="button" data-setlang="en">English</button></div>
+</header>
+<main>
+{% if msg %}<div class="flash">{{ msg }}</div>{% endif %}
+
+<div class="card">
+  <h2>① 從 Notion 匯入</h2>
+  <div class="row">
+    <button type="button" class="btn dark" id="btn-import">從 Notion 匯入</button>
+    {% if ev %}
+      <div>
+        <b>{{ ev.session_label }}　<span data-no-i18n>{{ ev.title }}</span></b>
+        <div class="muted">來源：{{ source_label }}{% if ev.raw.get('notion_source') %} · <a href="{{ ev.raw.notion_source }}" target="_blank" rel="noopener">Notion 頁面</a>{% endif %}</div>
+      </div>
+    {% else %}
+    {% endif %}
+  </div>
+  {% if ev %}
+  <div id="event-view" style="margin-top:16px">
+    <div class="kv" id="kv-ro" data-kv>
+      <div class="k">講者</div><div data-no-i18n>{{ ev.speaker.name }}{% if ev.speaker.title %}　{{ ev.speaker.title }}{% endif %}</div>
+      <div class="k">時間</div><div data-no-i18n>{{ ev.md_week }}　{{ ev.time_range }}</div>
+      <div class="k">地點</div><div data-no-i18n>{{ ev.location }}</div>
+      <div class="k">報名截止</div><div data-no-i18n>{{ ev.deadline_text }}</div>
+      <div class="k">鉤子</div><div>{% if ev.hook %}<span data-no-i18n>{{ ev.hook }}</span>{% else %}（無）{% endif %}</div>
+    </div>
+    <p style="margin:12px 0 0"><button type="button" class="btn ghost sm" id="btn-edit">修改欄位</button></p>
+    <form id="edit-form" class="hidden" method="post" action="/event/{{ slug }}/save" style="margin-top:12px">
+      <div class="edit-grid">
+        {% for key, lab in fields %}
+        <div><label class="muted">{{ lab }}</label>
+          <input name="{{ key }}" value="{{ field_values[key] }}"></div>
+        {% endfor %}
+      </div>
+      <p style="margin:12px 0 0"><button class="btn sm" type="submit">儲存並重新產生預覽</button>
+        <button type="button" class="btn ghost sm" id="btn-edit-cancel">取消</button></p>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<dialog id="import-dlg">
+  <div class="dlg">
+    <h2>選擇要辦的社課</h2>
+    <p class="muted" id="import-note">讀取中…</p>
+    <div id="import-list"></div>
+    <p style="margin:12px 0 0"><button type="button" class="btn ghost sm" id="btn-import-close">關閉</button></p>
+  </div>
+</dialog>
+
+{% if ev %}
+<div class="card">
+    <h2>狀態</h2>
+  <div class="stats">
+    <div class="stat"><div class="n" id="stat-reg">{{ stats.registrations }}</div><div class="l">課前報名人數</div></div>
+    <div class="stat"><div class="n" id="stat-bcc">{{ stats.bcc_count }}</div><div class="l">密件副本名單人數</div></div>
+    <div class="stat"><div class="n" id="stat-fb">{{ stats.feedback_n if stats.feedback_n is not none else "—" }}</div>
+      <div class="l">課後回饋{% if stats.feedback_avg is not none %} · 平均 {{ stats.feedback_avg }}{% endif %}
+        {% if feedback_url %} · <a href="{{ feedback_url }}">彙整頁</a>{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>② 執行動作</h2>
+  <div class="runall">
+    <form method="post" action="/api/run-all/{{ slug }}" id="runall-form">
+      <button class="btn big" type="submit" id="btn-runall" {% if runall.busy %}disabled{% endif %}>{% if runall.busy %}執行中…{% else %}▶ 全部執行{% endif %}</button>
+    </form>
+    <span class="muted" id="runall-msg">{% if runall.busy %}正在執行：{{ runall.current_label }}{% elif runall.message %}{{ runall.message }}{% if runall.finished %}（{{ runall.finished }}）{% endif %}{% endif %}</span>
+  </div>
+  <div class="actions" id="actions">
+    {% for act in actions %}
+    <div class="action st-{{ act.status }}" data-key="{{ act.key }}">
+      <div class="no">{{ act.no }}</div>
+      <div>
+        <div class="name">{{ act.label }}</div>
+        <div class="muted links" data-role="links">{% for L in act.links %}<a href="{{ L.href }}" target="_blank" rel="noopener">{{ L.label }}</a>{% endfor %}</div>
+        <div class="muted {% if act.status == 'failed' %}msg-failed{% endif %}" data-role="msg">{{ act.message }}</div>
+      </div>
+      <span class="pill {{ act.pill }}" data-role="pill">{{ act.status_label }}</span>
+      <div data-role="ctl">
+        {% if act.retry %}
+        <form method="post" action="/api/action/{{ slug }}/{{ act.key }}" data-action="{{ act.key }}" data-confirm="{{ act.confirm }}">
+          <button class="btn sm" type="submit" {% if act.disabled %}disabled{% endif %}>重跑</button>
+        </form>
+        {% elif act.status == 'done' %}<span class="ok-mark">✓</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>發布（需要你按）</h2>
+  <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn" type="button" id="btn-line" {% if not line.configured or not line.text %}disabled{% endif %}>LINE 直接發送</button>
+    <button class="btn" type="button" id="btn-announce" {% if not announce.draft_id or announce.sent_at %}disabled{% endif %}>寄出預告信</button>
+    <button class="btn ghost" type="button" id="btn-ig">存成 IG 草稿（手機）</button>
+    <button class="btn ghost" type="button" id="btn-story">轉發貼文到限動（手機）</button>
+  </div>
+  <p class="muted" id="ig-note" style="margin:8px 0 0">{% if ig_draft.status %}IG 草稿：{{ ig_draft.message }}{% if ig_draft.at %}（{{ ig_draft.at }}）{% endif %}{% endif %}</p>
+  <div class="ig" id="ig-shots" style="margin-top:8px">{% for sh in ig_draft.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
+  <p class="muted" id="story-note" style="margin:8px 0 0">{% if ig_story.status %}IG 限動：{{ ig_story.message }}{% if ig_story.at %}（{{ ig_story.at }}）{% endif %}{% endif %}</p>
+  <div class="ig" id="story-shots" style="margin-top:8px">{% for sh in ig_story.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
+  <p class="muted" id="announce-note" style="margin:8px 0 0">{% if announce.sent_at %}預告信已寄出：{{ announce.sent_at }}（Gmail {{ announce.message_id }}）{% endif %}</p>
+  <p class="muted" id="line-note" style="margin:8px 0 0">
+    {% if not line.configured %}LINE 未設定：缺少 {{ line.missing|join("、") }}（設環境變數，或放在 {{ line.config_file }}；不放 repo）。
+    {% elif not line.text %}還沒有 LINE 文案。
+    {% elif line.last_at %}上次發送：{{ line.last_at }}{% if line.last_same %}（同一份文案）{% endif %}。
+    {% endif %}
+  </p>
+</div>
+
+<div class="card" id="ig-music">
+  <h2>IG 音樂</h2>
+  {% for m in ig_music %}
+  <form method="post" action="/event/{{ slug }}/ig-music" class="edit-grid" style="margin-top:10px" data-kind="{{ m.kind }}">
+    <input type="hidden" name="kind" value="{{ m.kind }}">
+    <h3 style="grid-column:1/-1;margin:0">{{ m.name }}</h3>
+    <label style="grid-column:1/-1">歌曲<input name="song" value="{{ m.song }}" placeholder="歌名／歌手 或 YouTube 連結"></label>
+    <label>開始（{{ m.min_s }}～{{ m.max_s }} 秒）<input name="start" value="{{ m.start }}" placeholder="0:30" pattern="\d{1,2}:[0-5]\d"></label>
+    <label>結束<input name="end" value="{{ m.end }}" placeholder="0:45" pattern="\d{1,2}:[0-5]\d"></label>
+    <div style="grid-column:1/-1">
+      <button class="btn sm" type="submit">儲存{{ m.name }}音樂</button>
+      <span class="muted">{% if m.title %}目前：{{ m.title }}{% if m.artist %} — {{ m.artist }}{% endif %}，{{ m.start }}～{{ m.end }}（{{ m.dur }} 秒）{% else %}目前：不加音樂{% endif %}</span>
+    </div>
+  </form>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>規則檢查</h2>
+  {% if check_errors %}
+  <p><span class="pill p-err">違規 {{ check_errors|length }}</span>{% if run_name %}<span class="muted">　預覽：{{ run_name }}</span>{% endif %}</p>
+  <table>
+    <tr><th>檔案</th><th>規則</th><th>說明</th></tr>
+    {% for x in check_errors %}
+    <tr class="error" data-no-i18n><td>{{ x.file }}</td><td>{{ x.rule }}</td><td>{{ x.detail }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <form method="post" action="/event/{{ slug }}/preview" style="display:inline">
+    <button class="btn ghost sm" type="submit">重新檢查</button>
+  </form>
+  <details style="margin-top:10px">
+    <summary>新增規則{% if custom_rules %}（已有 {{ custom_rules|length }} 條自訂規則）{% endif %}</summary>
+    <form method="post" action="/event/{{ slug }}/rules" class="edit-grid" style="margin-top:10px" id="rule-form">
+      <label>規則名稱<input name="name" required></label>
+      <label>套用到<select name="target">{% for k, v in rule_targets.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      <label>類型<select name="kind">{% for k, v in rule_kinds.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      <label>文字<input name="pattern" required></label>
+      <label>等級<select name="level"><option value="error">違規（error）</option><option value="warn">提醒（warn）</option></select></label>
+      <label style="align-self:end"><input type="checkbox" name="regex" value="1" style="width:auto"> 用正規表示式</label>
+      <div><button class="btn sm" type="submit">加入規則並重新檢查</button></div>
+    </form>
+    {% if custom_rules %}
+    <table style="margin-top:10px">
+      <tr><th>自訂規則</th><th>套用到</th><th>類型</th><th>文字</th></tr>
+      {% for r in custom_rules %}<tr><td data-no-i18n>{{ r.name }}</td><td>{{ rule_targets.get(r.target, r.target) }}</td><td>{{ rule_kinds.get(r.kind, r.kind) }}</td><td data-no-i18n>{{ r.pattern }}</td></tr>{% endfor %}
+    </table>
+    {% endif %}
+  </details>
+</div>
+
+<div class="card">
+  <h2>信件預覽</h2>
+  <div class="tabs" id="mail-tabs">
+    <button type="button" class="on" data-src="{{ mail.announce }}" data-download="{{ mail_downloads.announce }}">預告信</button>
+    <button type="button" data-src="{{ mail.reminder }}" data-download="{{ mail_downloads.reminder }}">當天提醒信</button>
+    <button type="button" data-src="{{ mail.followup }}" data-download="{{ mail_downloads.followup }}">課後信</button>
+  </div>
+  {% if mail.announce %}
+  <p class="dl"><a class="btn ghost sm" id="mail-download" href="{{ mail_downloads.announce }}">下載這封信 .html</a></p>
+  <iframe class="preview" id="mail-frame" src="{{ mail.announce }}" title="信件預覽"></iframe>
+  {% else %}
+  <p class="muted">還沒有預覽。</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>LINE 與 IG 文案</h2>
+  <h3>LINE</h3>
+  {% if line_download %}<p class="dl"><a class="btn ghost sm" href="{{ line_download }}">下載 LINE 文案 .txt</a></p>{% endif %}
+  <pre data-no-i18n class="copy">{{ line_copy }}</pre>
+  <h3>IG</h3>
+  {% if ig_copy_download %}<p class="dl"><a class="btn ghost sm" href="{{ ig_copy_download }}">下載 IG 文案 .txt</a></p>{% endif %}
+  <pre data-no-i18n class="copy">{{ ig_copy }}</pre>
+</div>
+
+<div class="card">
+  <h2>IG 圖卡</h2>
+  <div class="ig">
+    {% for img in ig_cards %}
+    <figure>
+      <a href="{{ img.href }}" target="_blank" rel="noopener"><img src="{{ img.href }}" alt="{{ img.name }}"></a>
+      <figcaption><a class="btn ghost sm" href="{{ img.download }}">下載 {{ img.name }}</a></figcaption>
+    </figure>
+    {% else %}
+    <p class="muted">還沒有匯出的圖卡。</p>
+    {% endfor %}
+  </div>
+  {% if canva_url %}<p class="muted" style="margin:10px 0 0">Canva 設計：<a href="{{ canva_url }}" target="_blank" rel="noopener">{{ canva_id }}</a></p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>講者感謝狀</h2>
+  {% if cert_url or cert_png_url %}
+  <p class="dl">
+    {% if cert_pdf_download %}<a class="btn sm" href="{{ cert_pdf_download }}">下載 PDF</a>{% endif %}
+    {% if cert_png_download %}<a class="btn ghost sm" href="{{ cert_png_download }}">下載 PNG</a>{% endif %}
+    {% if cert_url %}<a class="btn ghost sm" href="{{ cert_url }}" target="_blank" rel="noopener">在瀏覽器開啟 PDF</a>{% endif %}
+  </p>
+  {% if cert_png_url %}
+  <img class="cert-img" src="{{ cert_png_url }}" alt="感謝狀">
+  {% endif %}
+  {% if cert_url %}
+  <object class="preview cert-pdf" data="{{ cert_url }}" type="application/pdf" title="感謝狀 PDF">
+    {% if not cert_png_url %}<p class="muted">瀏覽器無法內嵌 PDF，請改用上方按鈕下載或開啟。</p>{% endif %}
+  </object>
+  {% endif %}
+  {% else %}
+  <p class="muted">還沒有感謝狀預覽。</p>
+  {% endif %}
+</div>
+
+<dialog id="ig-dlg"><div class="dlg">
+  <h2 style="margin-top:0">請連接手機</h2>
+  <p><b>請連接手機，在手機上完成 IG 發文／草稿。</b></p>
+  <p id="ig-dev-msg" style="color:var(--err);font-weight:700"></p>
+  <ol class="ig-list">
+    <li>用 USB 線接上 HTC U23 pro，<b>解鎖螢幕</b>。</li>
+    <li>確認「開發人員選項 → USB 偵錯」已開啟；跳出「允許 USB 偵錯？」時按<b>允許</b>。</li>
+    <li>接好後再按一次「存成 IG 草稿（手機）」。</li>
+  </ol>
+  <p>會用這幾張圖卡（依序，第一張是封面）：</p>
+  {% if ig_cards %}
+  <ol class="ig-list">{% for img in ig_cards %}<li><b>{{ img.name }}</b><br><span class="muted" data-no-i18n>{{ img.path }}</span></li>{% endfor %}</ol>
+  {% else %}<p class="muted">還沒有圖卡。</p>{% endif %}
+  <p style="margin:12px 0 0"><button type="button" class="btn sm" id="btn-ig-close">知道了</button></p>
+</div></dialog>
+<dialog id="ig-go-dlg"><div class="dlg">
+  <h2 style="margin-top:0">在手機上存成 IG 草稿？</h2>
+  <p>手機已連線。程式會把下面四張圖推到手機（Pictures/VentureCrew），在 Instagram 開新貼文、選圖、貼上 IG 文案，最後<b>存成草稿</b>。<b>不會按分享。</b></p>
+  {% if ig_cards %}<ol class="ig-list">{% for img in ig_cards %}<li>{{ img.name }}</li>{% endfor %}</ol>{% endif %}
+  <p style="color:var(--warn);font-weight:700">貼中文文案時會短暫打開 scrcpy 視窗（約 5 秒）並自動按 Ctrl+V，請先別動滑鼠鍵盤。</p>
+  <p style="margin:12px 0 0;display:flex;gap:8px">
+    <label style="display:block;margin:0 0 8px;flex-basis:100%"><input type="checkbox" id="ig-publish" style="width:auto"> 直接發佈貼文（<b>公開動作</b>；不存草稿）</label>
+    <button type="button" class="btn sm" id="btn-ig-go">開始</button>
+    <button type="button" class="btn ghost sm" id="btn-ig-go-cancel">取消</button>
+  </p>
+</div></dialog>
+<dialog id="story-dlg"><div class="dlg">
+  <h2 style="margin-top:0">轉發貼文到限動？</h2>
+  <p><b>先確認貼文已經由你自己發佈。</b>程式會打開那則貼文 → 紙飛機 → 「新增到限時動態」，貼文約佔 80% 寬、四周留底色，加上課前表單的連結貼圖（右上角）{% if ig_music[1].title %}和限動音樂「{{ ig_music[1].title }}」{% else %}（限動沒有設定音樂）{% endif %}。</p>
+  <p><b>不會按「限時動態／摯友／分享到」。</b>這台 IG 沒有限動草稿，最後會停在編輯畫面，由你在手機上確認後自己分享。</p>
+  <label style="display:block;margin:8px 0">貼文網址（可留空＝個人檔案最新一則非置頂貼文）<input id="story-url" value="{{ ig_post_url }}" placeholder="https://www.instagram.com/p/…" style="width:100%"></label>
+  <label style="display:block;margin:8px 0"><input type="checkbox" id="story-publish" style="width:auto"> 直接發佈限動（<b>公開動作</b>；按「限時動態」）</label>
+  <label style="display:block;margin:8px 0"><input type="checkbox" id="story-like" style="width:auto"> 同時按讚＋轉發這則貼文（<b>公開動作</b>；已按過的不會再按，避免取消）</label>
+  <p style="color:var(--warn);font-weight:700">貼網址和連結文字時會短暫打開 scrcpy 視窗並自動按 Ctrl+V，請先別動滑鼠鍵盤，也別碰手機。</p>
+  <p id="story-dev-msg" style="color:var(--err);font-weight:700"></p>
+  <p style="margin:12px 0 0;display:flex;gap:8px">
+    <button type="button" class="btn sm" id="btn-story-go">開始</button>
+    <button type="button" class="btn ghost sm" id="btn-story-cancel">取消</button>
+  </p>
+</div></dialog>
+<dialog id="line-dlg"><div class="dlg">
+  <h2 style="margin-top:0">確認要發到這 {{ line.groups|length }} 個 LINE 群組？</h2>
+  <ul style="margin:0 0 8px">{% for g in line.groups %}<li data-no-i18n><b>{{ g }}</b></li>{% endfor %}</ul>
+  <p class="muted">下面就是會發出去的完整文字：</p>
+  <pre data-no-i18n class="copy" style="max-height:340px;overflow:auto">{{ line.text }}</pre>
+  {% if line.last_same %}<p style="color:var(--err);font-weight:700">這份文案 {{ line.last_at }} 已經發過一次，再按會重複發送。</p>{% endif %}
+  <p style="margin:12px 0 0;display:flex;gap:8px">
+    <button type="button" class="btn sm" id="btn-line-send">確認發送</button>
+    <button type="button" class="btn ghost sm" id="btn-line-cancel">取消</button>
+  </p>
+  <p class="muted" id="line-dlg-note"></p>
+</div></dialog>
+{% endif %}
+</main>
+<script>
+(function(){
+  const slug = {{ (slug or "")|tojson }};
+  const dlg = document.getElementById("import-dlg");
+  const note = document.getElementById("import-note");
+  const list = document.getElementById("import-list");
+  document.getElementById("btn-import").addEventListener("click", async () => {
+    dlg.showModal();
+    note.textContent = "讀取中…";
+    list.innerHTML = "";
+    try {
+      const r = await fetch("/api/lectures");
+      const data = await r.json();
+      const src = {notion:"已從 Notion 讀到社課。", notion_cache:"已從 Notion 匯出讀到社課。", yaml_offline:"Notion 權杖未設定，已載入本機活動檔（離線可用）。",
+                   yaml_fallback:"Notion 暫時讀不到，已改用本機活動檔。", yaml:"已載入本機活動檔。"}[data.source] || data.source;
+      note.textContent = src + (data.error ? "（" + data.error + "）" : "");
+      if (!data.lectures || !data.lectures.length) {
+        list.innerHTML = "<p class='muted'>沒有找到社課。</p>";
+        return;
+      }
+      for (const L of data.lectures) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lecture";
+        const sess = L.session_no ? ("第" + L.session_no + "堂 · ") : "";
+        b.innerHTML = "<b>" + sess + (L.date_label || "") + "　" + (L.short_title || L.title) + "</b>"
+          + "<span class='muted'>" + (L.speaker || "") + (L.room ? " · " + L.room : "") + " · " + (L.source === "notion" ? "Notion" : "本機活動檔") + "</span>";
+        b.addEventListener("click", async () => {
+          note.textContent = "匯入中…";
+          const fd = new FormData();
+          fd.append("slug", L.slug);
+          const res = await fetch("/api/import", {method:"POST", body:fd});
+          const j = await res.json();
+          if (!res.ok || j.error) { note.textContent = "匯入失敗：" + (j.error || res.status); return; }
+          location.href = j.redirect || "/?event=" + encodeURIComponent(j.slug);
+        });
+        list.appendChild(b);
+      }
+    } catch (e) {
+      note.textContent = "讀取失敗：" + e;
+    }
+  });
+  document.getElementById("btn-import-close").addEventListener("click", () => dlg.close());
+
+  const editBtn = document.getElementById("btn-edit");
+  const editForm = document.getElementById("edit-form");
+  const cancel = document.getElementById("btn-edit-cancel");
+  if (editBtn && editForm) {
+    editBtn.addEventListener("click", () => { editForm.classList.remove("hidden"); editBtn.classList.add("hidden"); });
+    if (cancel) cancel.addEventListener("click", () => { editForm.classList.add("hidden"); editBtn.classList.remove("hidden"); });
+  }
+
+  const tabs = document.getElementById("mail-tabs");
+  const frame = document.getElementById("mail-frame");
+  if (tabs && frame) {
+    tabs.addEventListener("click", (ev) => {
+      const b = ev.target.closest("button");
+      if (!b || !b.dataset.src) return;
+      tabs.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      frame.src = b.dataset.src;
+      const dl = document.getElementById("mail-download");
+      if (dl && b.dataset.download) dl.href = b.dataset.download;
+    });
+  }
+
+  const PILL = {idle:"p-idle", running:"p-run", done:"p-ok", failed:"p-err", skipped:"p-warn", coming:"p-come"};
+  function esc(t){ return String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  function isBusy(data){ return (data.runall && data.runall.busy) || (data.actions || []).some(a => a.status === "running"); }
+  function applyStatus(data) {
+    if (!data) return;
+    if (data.stats) {
+      const s = data.stats;
+      const r = document.getElementById("stat-reg"); if (r) r.textContent = s.registrations;
+      const b = document.getElementById("stat-bcc"); if (b) b.textContent = s.bcc_count;
+      const f = document.getElementById("stat-fb"); if (f) f.textContent = (s.feedback_n == null ? "—" : s.feedback_n);
+      const n = document.getElementById("stat-note"); if (n && s.note) n.textContent = s.note;
+    }
+    const ra = data.runall || {};
+    const rb = document.getElementById("btn-runall");
+    const rm = document.getElementById("runall-msg");
+    if (rb) { rb.disabled = !!ra.busy; rb.textContent = ra.busy ? "執行中…" : "▶ 全部執行"; }
+    if (rm) {
+      if (ra.busy) rm.textContent = "正在執行：" + (ra.current_label || "…");
+      else if (ra.message) rm.textContent = ra.message + (ra.finished ? "（" + ra.finished + "）" : "");
+    }
+    (data.actions || []).forEach(act => {
+      const row = document.querySelector('.action[data-key="'+act.key+'"]');
+      if (!row) return;
+      row.className = "action st-" + act.status;
+      const pill = row.querySelector('[data-role="pill"]');
+      pill.className = "pill " + (PILL[act.status] || "p-idle");
+      pill.textContent = act.status_label || act.status;
+      const msg = row.querySelector('[data-role="msg"]');
+      msg.textContent = act.message || "";
+      msg.className = "muted" + (act.status === "failed" ? " msg-failed" : "");
+      row.querySelector('[data-role="links"]').innerHTML = (act.links || []).map(L => '<a href="'+esc(L.href)+'" target="_blank" rel="noopener">'+esc(L.label)+'</a>').join(" ");
+      const ctl = row.querySelector('[data-role="ctl"]');
+      if (act.retry) {
+        ctl.innerHTML = '<form method="post" action="/api/action/'+encodeURIComponent(slug)+'/'+act.key+'" data-action="'+act.key+'" data-confirm="'+esc(act.confirm)+'"><button class="btn sm" type="submit"'+(act.disabled ? " disabled" : "")+'>重跑</button></form>';
+        bindForm(ctl.querySelector("form"));
+      } else {
+        ctl.innerHTML = act.status === "done" ? '<span class="ok-mark">✓</span>' : "";
+      }
+    });
+  }
+
+  let timer = null;
+  async function poll() {
+    if (!slug) return;
+    try {
+      const r = await fetch("/api/status/"+encodeURIComponent(slug));
+      const data = await r.json();
+      applyStatus(data);
+      const busy = isBusy(data);
+      if (busy && !timer) timer = setInterval(poll, 2000);
+      if (!busy && timer) { clearInterval(timer); timer = null; }
+    } catch (e) {}
+  }
+
+  function bindForm(form) {
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = "1";
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const conf = form.dataset.confirm;
+      if (conf && !confirm(conf)) return;
+      const btn = form.querySelector("button");
+      if (btn) btn.disabled = true;
+      try {
+        const r = await fetch(form.action, {method:"POST"});
+        const data = await r.json();
+        applyStatus(data);
+        poll();
+        if (!timer) timer = setInterval(poll, 2000);
+      } catch (e) {
+        alert("動作失敗：" + e);
+        if (btn) btn.disabled = false;
+      }
+    });
+  }
+  document.querySelectorAll("form[data-action]").forEach(bindForm);
+  const raf = document.getElementById("runall-form");
+  if (raf) {
+    raf.dataset.confirm = "依序執行全部步驟：已完成的會略過，不會寄信、不會發 IG、不會推 LINE。開始？";
+    bindForm(raf);
+  }
+
+  const igDlg = document.getElementById("ig-dlg");
+  const igGo = document.getElementById("ig-go-dlg");
+  const igBtn = document.getElementById("btn-ig");
+  function applyIg(v) {
+    if (!v) return;
+    const n = document.getElementById("ig-note");
+    if (n && v.status) n.textContent = "IG 草稿：" + (v.message || "") + (v.at ? "（" + v.at + "）" : "");
+    const box = document.getElementById("ig-shots");
+    if (box) box.innerHTML = (v.shot_links || []).map(s => '<figure><a href="'+esc(s.href)+'" target="_blank" rel="noopener"><img src="'+esc(s.href)+'?t='+Date.now()+'" alt="'+esc(s.name)+'" style="background:#fff"></a><figcaption class="muted">'+esc(s.name)+'</figcaption></figure>').join("");
+  }
+  let igTimer = null;
+  async function pollIg() {
+    try {
+      const r = await fetch("/api/status/"+encodeURIComponent(slug));
+      const d = await r.json();
+      applyIg(d.ig_draft);
+      if (!(d.ig_draft && d.ig_draft.busy) && igTimer) { clearInterval(igTimer); igTimer = null; if (igBtn) igBtn.disabled = false; }
+    } catch (e) {}
+  }
+  if (igBtn && igDlg) {
+    igBtn.addEventListener("click", async () => {
+      igBtn.disabled = true;
+      try {
+        const r = await fetch("/api/ig/"+encodeURIComponent(slug)+"/check", {method:"POST"});
+        const d = await r.json();
+        if (!d.ok) { document.getElementById("ig-dev-msg").textContent = d.message || ""; igDlg.showModal(); }
+        else igGo.showModal();
+      } catch (e) { document.getElementById("ig-dev-msg").textContent = String(e); igDlg.showModal(); }
+      igBtn.disabled = false;
+    });
+    document.getElementById("btn-ig-close").addEventListener("click", () => igDlg.close());
+    document.getElementById("btn-ig-go-cancel").addEventListener("click", () => igGo.close());
+    document.getElementById("btn-ig-go").addEventListener("click", async () => {
+      const pub = document.getElementById("ig-publish").checked;
+      if (pub && !confirm("確定要直接在社團 IG 發佈這則貼文？（公開動作）")) return;
+      igGo.close(); igBtn.disabled = true;
+      const r = await fetch("/api/ig/"+encodeURIComponent(slug)+"/draft", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({confirm:true, publish: pub, publish_confirm: pub})});
+      const d = await r.json();
+      applyIg(d.ig_draft);
+      if (!igTimer) igTimer = setInterval(pollIg, 2000);
+    });
+  }
+  const storyBtn = document.getElementById("btn-story");
+  const storyDlg = document.getElementById("story-dlg");
+  let storyTimer = null;
+  function applyStory(v) {
+    if (!v) return;
+    const n = document.getElementById("story-note");
+    if (n && v.status) n.textContent = "IG 限動：" + (v.message || "") + (v.at ? "（" + v.at + "）" : "");
+    const box = document.getElementById("story-shots");
+    if (box) box.innerHTML = (v.shot_links || []).map(s => '<figure><a href="'+esc(s.href)+'" target="_blank" rel="noopener"><img src="'+esc(s.href)+'&t='+Date.now()+'" alt="'+esc(s.name)+'" style="background:#fff"></a><figcaption class="muted">'+esc(s.name)+'</figcaption></figure>').join("");
+  }
+  async function pollStory() {
+    try {
+      const d = await (await fetch("/api/status/"+encodeURIComponent(slug))).json();
+      applyStory(d.ig_story);
+      if (!(d.ig_story && d.ig_story.busy) && storyTimer) { clearInterval(storyTimer); storyTimer = null; storyBtn.disabled = false; }
+    } catch (e) {}
+  }
+  if (storyBtn && storyDlg) {
+    storyBtn.addEventListener("click", async () => {
+      storyBtn.disabled = true;
+      try {
+        const d = await (await fetch("/api/ig/"+encodeURIComponent(slug)+"/check", {method:"POST"})).json();
+        if (!d.ok) { document.getElementById("ig-dev-msg").textContent = d.message || ""; igDlg.showModal(); }
+        else { document.getElementById("story-dev-msg").textContent = ""; storyDlg.showModal(); }
+      } catch (e) { document.getElementById("ig-dev-msg").textContent = String(e); igDlg.showModal(); }
+      storyBtn.disabled = false;
+    });
+    document.getElementById("btn-story-cancel").addEventListener("click", () => storyDlg.close());
+    document.getElementById("btn-story-go").addEventListener("click", async () => {
+      const like = document.getElementById("story-like").checked;
+      const pub = document.getElementById("story-publish").checked;
+      if (like && !confirm("確定要用社團帳號對這則貼文按讚＋轉發？（公開動作）")) return;
+      if (pub && !confirm("確定要直接發佈這則限動？（公開動作）")) return;
+      const r = await fetch("/api/ig/"+encodeURIComponent(slug)+"/story", {method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({confirm:true, like_repost: like, publish: pub, publish_confirm: pub, post_url: document.getElementById("story-url").value.trim()})});
+      const d = await r.json();
+      if (!d.ok) { document.getElementById("story-dev-msg").textContent = d.error || r.status; return; }
+      storyDlg.close(); storyBtn.disabled = true;
+      applyStory(d.ig_story);
+      if (!storyTimer) storyTimer = setInterval(pollStory, 2000);
+    });
+  }
+  const annBtn = document.getElementById("btn-announce");
+  const ANN = {{ (announce or {})|tojson }};
+  if (annBtn) annBtn.addEventListener("click", async () => {
+    if (!confirm("確定要寄出預告信？\n主旨：" + ANN.subject + "\n密件副本：" + ANN.bcc_count + " 人\n只寄這一封，寄出後無法收回。")) return;
+    annBtn.disabled = true;
+    const note = document.getElementById("announce-note");
+    note.textContent = "寄送中…";
+    try {
+      const r = await fetch("/api/drafts/"+encodeURIComponent(slug)+"/send-announce", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({confirm:true, draft_id: ANN.draft_id})});
+      const j = await r.json();
+      note.textContent = j.ok ? ("預告信已寄出：" + j.sent_at + "（Gmail " + j.message_id + "）") : ("沒有寄出：" + (j.error || r.status));
+    } catch (e) { note.textContent = "沒有寄出：" + e; }
+  });
+  const lineDlg = document.getElementById("line-dlg");
+  const lineBtn = document.getElementById("btn-line");
+  const LINE_HASH = {{ (line.hash if line else "")|tojson }};
+  if (lineBtn && lineDlg) {
+    lineBtn.addEventListener("click", () => { document.getElementById("line-dlg-note").textContent = ""; lineDlg.showModal(); });
+    document.getElementById("btn-line-cancel").addEventListener("click", () => lineDlg.close());
+    document.getElementById("btn-line-send").addEventListener("click", async (ev) => {
+      const b = ev.currentTarget; b.disabled = true;
+      const note = document.getElementById("line-dlg-note");
+      note.textContent = "發送中…";
+      try {
+        const r = await fetch("/api/line/"+encodeURIComponent(slug)+"/send", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({confirm:true, hash:LINE_HASH})});
+        const j = await r.json();
+        if (j.ok) { note.textContent = "已發送（" + j.sent_at + "）。"; document.getElementById("line-note").textContent = "上次發送：" + j.sent_at + "（同一份文案）。"; }
+        else { note.textContent = "沒有發送：" + (j.error || r.status); b.disabled = false; }
+      } catch (e) { note.textContent = "沒有發送：" + e; b.disabled = false; }
+    });
+  }
+  if (slug) poll();
+})();
+</script>
+<script id="i18n-data" type="application/json">{{ i18n_json|safe }}</script>
+<script>
+(function(){
+  const root = document.documentElement;
+  const lang = root.dataset.lang === "en" ? "en" : "zh";
+  document.querySelectorAll("[data-setlang]").forEach(b => {
+    b.classList.toggle("on", b.dataset.setlang === lang);
+    b.addEventListener("click", () => {
+      try { localStorage.setItem("lang", b.dataset.setlang); } catch (e) {}
+      document.cookie = "lang=" + b.dataset.setlang + ";path=/;max-age=31536000";
+      location.reload();
+    });
+  });
+  if (lang !== "en") { root.classList.add("i18n-ready"); return; }
+  const D = JSON.parse(document.getElementById("i18n-data").textContent);
+  const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const keys = Object.keys(D.phrases).sort((a, b) => b.length - a.length);
+  const big = new RegExp(keys.map(reEsc).join("|"), "g");
+  const pun = new RegExp(Object.keys(D.punct).map(reEsc).join("|"), "g");
+  const pats = D.patterns.map(([p, r]) => [new RegExp(p, "g"), r]);
+  const has = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/;
+  function tr(text) {
+    if (!text || !has.test(text)) return text;
+    const lead = text.match(/^\s*/)[0], trail = text.match(/\s*$/)[0];
+    let t = text.trim();
+    for (const [rx, rep] of pats) t = t.replace(rx, rep);
+    t = t.replace(big, m => D.phrases[m]).replace(pun, m => D.punct[m]);
+    t = t.replace(/ {2,}/g, " ").replace(/ ([,.;:)])/g, "$1").replace(/\( /g, "(").trim();
+    return lead + t + trail;
+  }
+  window.T = tr;
+  const skip = el => !el || el.closest("[data-no-i18n],script,style,textarea");
+  function run(node) {
+    if (node.nodeType === 3) { if (!skip(node.parentElement)) { const v = tr(node.nodeValue); if (v !== node.nodeValue) node.nodeValue = v; } return; }
+    if (node.nodeType !== 1 || skip(node)) return;
+    for (const a of ["placeholder", "title", "alt", "aria-label", "data-confirm"]) {
+      if (node.hasAttribute && node.hasAttribute(a)) { const v = tr(node.getAttribute(a)); if (v !== node.getAttribute(a)) node.setAttribute(a, v); }
+    }
+    if (node.tagName === "INPUT" && (node.type === "submit" || node.type === "button")) node.value = tr(node.value);
+    node.childNodes.forEach(run);
+  }
+  run(document.body);
+  document.title = tr(document.title);
+  const oc = window.confirm.bind(window), oa = window.alert.bind(window);
+  window.confirm = m => oc(tr(String(m)));
+  window.alert = m => oa(tr(String(m)));
+  new MutationObserver(ms => ms.forEach(m => {
+    if (m.type === "characterData") run(m.target);
+    else if (m.type === "attributes") run(m.target);
+    else m.addedNodes.forEach(run);
+  })).observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "data-confirm"]});
+  root.classList.add("i18n-ready");
+})();
+</script>
+</body>
+</html>

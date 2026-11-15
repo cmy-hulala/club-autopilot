@@ -1,0 +1,6 @@
+# Fake private settings for tests only (real ones live outside the repo).
+forms_account: officer@example.com
+notion_page_id: ""
+line_groups:
+  - {name: 115-1交大創創社, id: CFAKEGROUPID0000000000000000000001}
+  - {name: 陽交大創創社資訊分享群, id: CFAKEGROUPID0000000000000000000002}

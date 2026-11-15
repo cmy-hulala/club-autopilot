@@ -1,0 +1,48 @@
+{%- macro p(text, extra="", size=None, color="#222222") -%}
+<p style="margin:0 0 14px 0;font-family:{{ font }};font-size:{{ size or 15 }}px;line-height:1.8;color:{{ color }};{{ extra }}">{{ text }}</p>
+{%- endmacro -%}
+{%- macro gold(href, label) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 10px 0;"><tr><td style="background-color:#c98d17;border-radius:6px;"><a href="{{ href }}" target="_blank" style="display:inline-block;padding:12px 22px;border:1px solid #c98d17;border-radius:6px;font-family:{{ font }};font-size:16px;line-height:20px;font-weight:bold;color:#ffffff;text-decoration:none;">{{ label }}</a></td></tr></table>
+{%- endmacro -%}
+{%- macro dark(href, label) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 10px 0;"><tr><td style="background-color:#111111;border-radius:6px;"><a href="{{ href }}" target="_blank" style="display:inline-block;padding:12px 22px;border:1px solid #111111;border-radius:6px;font-family:{{ font }};font-size:16px;line-height:20px;font-weight:bold;color:#ffffff;text-decoration:none;">{{ label }}</a></td></tr></table>
+{%- endmacro -%}
+{%- macro goldline(href, label, pad="10px 20px") -%}
+<a href="{{ href }}" target="_blank" style="display:inline-block;padding:{{ pad }};border:1px solid #c98d17;border-radius:6px;font-family:{{ font }};font-size:15px;line-height:20px;font-weight:bold;color:#8a4f00;text-decoration:none;">{{ label }}</a>
+{%- endmacro -%}
+{%- macro hr() -%}<hr style="border:0;border-top:1px solid #dddddd;margin:30px 0;">{%- endmacro -%}
+{%- macro h2(text, top=0) -%}
+<h2 style="margin:{{ top }}px 0 8px 0;font-family:{{ font }};font-size:20px;line-height:1.5;color:#222222;">{{ text }}</h2>
+{%- endmacro -%}
+{%- macro infocard(heading) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0;"><tr><td style="background-color:#f5f5f5;border-radius:8px;padding:20px 22px;font-family:{{ font }};font-size:15px;line-height:1.8;color:#222222;">
+<div style="font-family:{{ font }};font-size:17px;font-weight:bold;margin:0 0 10px 0;">{{ heading }}</div>
+<span style="font-family:{{ font }};"><strong>日期｜</strong>{{ md_week }}<br>
+<strong>時間｜</strong>{{ time_range }}<br>
+<strong>地點｜</strong>{{ location }}<br>
+<strong>講者｜</strong>{{ speaker.name }}｜{{ speaker.title }}</span>
+<div style="font-family:{{ font }};margin:16px 0 4px 0;font-weight:bold;">活動時程</div>
+<span style="font-family:{{ font }};">{% for s in schedule %}{{ s[0] }}–{{ s[1] }}｜{{ s[2] }}{% if not loop.last %}<br>{% endif %}{% endfor %}</span>
+</td></tr></table>
+{%- endmacro -%}
+{%- macro wrap_open() -%}
+<meta charset="utf-8">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="center" style="padding:0 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
+<tr><td style="font-family:{{ font }};font-size:15px;line-height:1.8;color:#222222;text-align:left;">
+{%- endmacro -%}
+{%- macro footer() -%}
+<p style="margin:30px 0 4px 0;font-family:{{ font }};font-weight:bold;color:#222222;">{{ slogan1 }}</p>
+<p style="margin:0 0 12px 0;font-family:{{ font }};font-size:14px;font-style:italic;color:#555555;">{{ slogan2 }}</p>
+<p style="margin:0 0 12px 0;font-family:{{ font }};font-size:14px;color:#555555;">{{ club.name_zh }}<br>{{ club.name_en | replace("&", "&amp;") }}</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px 0;"><tr>
+<td style="padding:0 8px 0 0;"><a href="{{ club.instagram }}" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/60px-Instagram_icon.png" width="24" height="24" alt="Instagram" style="display:block;border:0;"></a></td>
+<td style="font-family:{{ font }};font-size:14px;line-height:24px;"><a href="{{ club.instagram }}" target="_blank" style="font-family:{{ font }};color:#8a4f00;text-decoration:none;">{{ club.ig_handle }}</a></td>
+</tr></table>
+<img src="{{ club.logo_url }}" width="91" height="96" alt="陽明交大創新創業社" style="display:block;border:0;">
+</td></tr>
+</table>
+</td></tr>
+</table>
+{%- endmacro -%}

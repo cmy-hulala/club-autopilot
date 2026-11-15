@@ -1,0 +1,28 @@
+.venv/
+__pycache__/
+*.pyc
+out/
+assets_private/
+_canva/
+.pytest_cache/
+# secrets never live here
+token*.json
+credentials*.json
+client_secret*.json
+*.eml
+members*.txt
+
+# speaker photo & cards with the speaker photo: kept locally, not published (third-party likeness)
+assets/speaker_*
+assets/canva_export/
+
+# private, machine-local settings and lists (never commit)
+.env
+.env.*
+創創社-私密/
+社員.txt
+bcc_exclude.txt
+line_bot.json
+config/local.yaml
+# demo video, raw recordings, Devpost drafts
+demo/
