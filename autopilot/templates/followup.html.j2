@@ -1,7 +1,7 @@
 {%- import "_macros.j2" as m with context -%}
-<!-- 主旨：【陽明交大創創社】第{{ n_zh }}堂社課課後資訊｜{{ title }} -->
+<!-- 主旨：【{{ club.short }}】第{{ n_zh }}堂社課課後資訊｜{{ title }} -->
 {{ m.wrap_open() }}
-{{ m.p("創創社的夥伴們，大家好！") }}
+{{ m.p(club.short ~ "的夥伴們，大家好！") }}
 {{ m.p("謝謝大家參加" ~ session_label ~ "「<strong>" ~ title ~ "</strong>」，也謝謝 " ~ speaker.name ~ " 的精彩分享！") }}
 {% if slides_url %}{{ m.dark(slides_url, "查看社課簡報") }}{% endif %}
 <h3 style="margin:30px 0 6px 0;font-family:{{ font }};font-size:18px;line-height:1.5;color:#8a4f00;">{{ session_label }}回饋表單</h3>

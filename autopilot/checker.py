@@ -74,7 +74,8 @@ def _html_rules(name: str, html: str, ev: Event, out: list[Finding]):
         ids = sorted(set(re.findall(r"entry\.(\d+)=", body)))
         add("error" if len(ids) > 1 else "ok", "社團規則：課後信只預填整體滿意度一題", "、".join(ids))
     add("ok" if SLOGAN_1 in body and SLOGAN_2 in body else "error", "頁尾兩句口號")
-    add("ok" if "instagram.com/nycu_entrepreneurship_club" in body else "error", "頁尾 IG 連結")
+    ig = str((ev["club"] or {}).get("instagram") or "")
+    add("ok" if ig and ig in body else "error", "頁尾 IG 連結")
     add("ok" if "max-width:600px" in body else "error", "內容最寬 600px")
 
 

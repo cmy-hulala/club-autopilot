@@ -1,7 +1,8 @@
 <header class="top">
-  <img src="/asset/club_logo.png" alt="{{ ui.brand_alt }}">
+  {% if brand.logo_url %}<img src="{{ brand.logo_url }}" alt="{{ brand.alt }}">{% endif %}
   <div>
-    <b>Club Autopilot</b> · {{ ui.header_tagline }}
+    <b>Club Autopilot</b>
+    {% if brand.name %} · <span data-no-i18n>{{ brand.name }}</span>{% else %} · {{ ui.header_fallback }}{% endif %}
   </div>
   <nav class="topnav" aria-label="{{ ui.nav_label }}">
     <a href="/">{{ ui.nav_dashboard }}</a>

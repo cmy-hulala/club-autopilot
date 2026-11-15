@@ -44,6 +44,52 @@ if ($PSScriptRoot) {
         return (Test-Path -LiteralPath $req) -and (Test-Path -LiteralPath $pkg)
     }
 
+    $Branch = 'launchpad'
+
+    function Find-RealGit {
+        $known = @(
+            (Join-Path $env:ProgramFiles 'Git\cmd\git.exe')
+        )
+        $pf86 = ${env:ProgramFiles(x86)}
+        if ($pf86) { $known += (Join-Path $pf86 'Git\cmd\git.exe') }
+        foreach ($exe in $known) {
+            if (Test-Path -LiteralPath $exe) { return $exe }
+        }
+        $cmd = Get-Command git -ErrorAction SilentlyContinue
+        if ($cmd -and $cmd.Source -and $cmd.Source -notlike '*\WindowsApps\*') { return $cmd.Source }
+        return $null
+    }
+
+    function Update-Launchpad([string]$Repo) {
+        $gitDir = Join-Path $Repo '.git'
+        if (-not (Test-Path -LiteralPath $gitDir)) { return }
+        $git = Find-RealGit
+        if (-not $git) {
+            Say "這台電腦還沒有 Git，先用現有的程式。 / Git is not installed, so the existing copy will be used."
+            return
+        }
+        Say "正在更新 launchpad … / Updating launchpad…"
+        Push-Location -LiteralPath $Repo
+        try {
+            & $git fetch origin $Branch
+            if ($LASTEXITCODE -ne 0) {
+                Say "連不到 GitHub，沿用這台電腦上的 launchpad。 / Could not reach GitHub. Using the launchpad checkout already on this computer."
+                return
+            }
+            & $git checkout $Branch
+            if ($LASTEXITCODE -ne 0) {
+                Say "無法切換到 launchpad，沿用目前的版本。 / Could not check out launchpad. Using the current version."
+                return
+            }
+            & $git pull --ff-only origin $Branch
+            if ($LASTEXITCODE -ne 0) {
+                Say "無法快轉更新 launchpad，沿用目前的版本。 / Could not fast-forward launchpad. Using the current version."
+            }
+        } finally {
+            Pop-Location
+        }
+    }
+
     function Find-Repo {
         if (Test-RepoDir $ClubStartScriptRoot) {
             return [System.IO.Path]::GetFullPath($ClubStartScriptRoot)
@@ -86,13 +132,14 @@ if ($PSScriptRoot) {
     }
 
     Say "正在打開 Club Autopilot … / Opening Club Autopilot…"
+    $repo = Find-Repo
+    if ($repo) { Update-Launchpad $repo }
     if (Test-OnboardingUp) {
         Open-Onboarding
-        Say "網站已經在跑，已打開初次設定。 / The site is already running. Opened onboarding."
+        Say "網站已經在跑，已打開初次設定。若剛剛更新了 launchpad，請關掉伺服器視窗後再執行一次 start.ps1。 / The site is already running. Opened onboarding. If launchpad was just updated, close the server window and run start.ps1 again."
         return
     }
 
-    $repo = Find-Repo
     if (-not $repo) {
         Fail "找不到專案。請先貼上 setup 那一行。 / The project folder was not found. Paste the setup one-liner first."
     }

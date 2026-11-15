@@ -11,8 +11,7 @@ EXTRA_PATTERNS: list[tuple[str, str]] = [
 ]
 
 T: dict[str, str] = {
-    "brand_alt": "創創社",
-    "header_tagline": "陽明交大創創社社課自動化",
+    "header_fallback": "社團活動自動化",
     "nav_label": "主要選單",
     "nav_dashboard": "儀表板",
     "nav_onboarding": "初次設定",
@@ -111,8 +110,9 @@ T: dict[str, str] = {
     "err_need_dry": "請先跑完預覽演練。",
     "dry_sent_false": "預覽演練沒有送出任何東西。",
     "dry_steps_label": "預覽步驟數",
-    "write_config": "寫入本機設定",
-    "config_saved": "設定已寫到本機私密資料夾，沒有寫進程式庫。",
+    "write_config": "完成設定並儲存",
+    "finish_explain": "只會把設定寫進這台電腦上的這個檔案。不會上傳，也不會寄出或發送任何東西。",
+    "config_saved": "設定已寫在這台電腦的檔案裡。沒有上傳，也沒有寄出或發送任何東西。",
     "download_template": "下載空白範本",
     "back_dashboard": "回到儀表板",
     "open_modules": "開啟模組頁",
@@ -226,8 +226,7 @@ T: dict[str, str] = {
 }
 
 EN: dict[str, str] = {
-    "brand_alt": "NYCU IEC",
-    "header_tagline": "NYCU IEC lecture automation",
+    "header_fallback": "Club event automation",
     "nav_label": "Main menu",
     "nav_dashboard": "Dashboard",
     "nav_onboarding": "First-time setup",
@@ -326,8 +325,9 @@ EN: dict[str, str] = {
     "err_need_dry": "Run the preview dry-run first.",
     "dry_sent_false": "The preview dry-run did not send anything.",
     "dry_steps_label": "Preview steps",
-    "write_config": "Save local settings",
-    "config_saved": "Settings were saved to the local private folder, not into the git repository.",
+    "write_config": "Finish and save settings",
+    "finish_explain": "This only writes the settings to this file on this computer. Nothing is uploaded or sent.",
+    "config_saved": "Settings were written to a file on this computer. Nothing was uploaded or sent.",
     "download_template": "Download a blank template",
     "back_dashboard": "Back to the dashboard",
     "open_modules": "Open the modules page",

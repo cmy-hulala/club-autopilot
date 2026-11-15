@@ -1,7 +1,7 @@
 {%- import "_macros.j2" as m with context -%}
-<!-- 主旨：【陽明交大創創社】第{{ n_zh }}堂社課提醒｜{{ title }} -->
+<!-- 主旨：【{{ club.short }}】第{{ n_zh }}堂社課提醒｜{{ title }} -->
 {{ m.wrap_open() }}
-{{ m.p("創創社的夥伴們，大家好！") }}
+{{ m.p(club.short ~ "的夥伴們，大家好！") }}
 {{ m.p(session_label ~ "「<strong>" ~ title ~ "</strong>」將於今天晚上舉行，期待與大家見面！") }}
 {{ m.p(hook_lead) }}
 {{ m.infocard(session_label ~ "資訊") }}

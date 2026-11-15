@@ -31,20 +31,31 @@ TOKEN_FILENAMES = (
     Path("notion") / "token",
 )
 
-# Club defaults shared by every lecture; event-specific fields come from Notion / YAML.
-CLUB_DEFAULTS = {
-    "club": {
-        "name_zh": "國立陽明交通大學創新創業社",
-        "name_en": "NYCU Innovation & Entrepreneurship Club",
-        "short": "陽明交大創創社",
-        "email": "nycu.iec@gmail.com",
-        "instagram": "https://www.instagram.com/nycu_entrepreneurship_club/",
-        "ig_handle": "@nycu_entrepreneurship_club",
-        "logo_url": "https://ci3.googleusercontent.com/mail-sig/AIorK4w5gSoYzgaAuro6S53z48QuzR22KQLFUZblD3Qo8SOvK67RsvSANL2NSpM35Xl4bc-kHtOnXkMO4cGs",
-        "linktree_url": "https://linktr.ee/nycuiec",
-    },
-    "campus": "陽明交通大學光復校區",
-}
+def club_defaults() -> dict:
+    """Neutral fields for a Notion import. A saved club profile replaces the placeholders."""
+    name, email, link = "社團", "club@example.com", ""
+    try:
+        from .local_settings import load
+        saved = load() or {}
+        if isinstance(saved, dict):
+            name = str(saved.get("club_name") or name).strip() or name
+            email = str(saved.get("club_email") or saved.get("contact_email") or email).strip() or email
+            link = str(saved.get("linktree_url") or "").strip()
+    except Exception:
+        pass
+    return {
+        "club": {
+            "name_zh": name,
+            "name_en": name,
+            "short": name,
+            "email": email,
+            "instagram": "",
+            "ig_handle": "",
+            "logo_url": "",
+            "linktree_url": link,
+        },
+        "campus": "",
+    }
 
 
 def private_dir() -> Path:
@@ -198,7 +209,7 @@ def _event_from_page(page: dict, assumed: list[str] | None = None) -> dict:
         d = dt.date.fromisoformat(date)
         deadline = (d - dt.timedelta(days=1)).isoformat() + " 23:59"
     raw = {
-        **CLUB_DEFAULTS,
+        **club_defaults(),
         "semester": semester,
         "session_no": session_no or 1,
         "title": title,

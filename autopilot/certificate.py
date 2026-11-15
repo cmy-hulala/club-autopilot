@@ -148,11 +148,36 @@ def lecture_title(ev: Event) -> str:
     return (ev.raw.get("certificate_title") or ev.raw.get("title") or ev["title"]).strip()
 
 
+# The bundled background paints the original club's rocket here. Other clubs get that mark covered.
+LOGO_BOX = (1548, 1928, 1712, 2108)
+
+
+def _club(ev: Event | dict) -> dict:
+    raw = ev.raw if hasattr(ev, "raw") else ev
+    club = raw.get("club") if isinstance(raw, dict) else None
+    return club if isinstance(club, dict) else {}
+
+
+def is_original_club(ev: Event | dict) -> bool:
+    club = _club(ev)
+    blob = " ".join(str(club.get(k) or "") for k in ("name_zh", "name_en", "short", "email", "ig_handle"))
+    return ("創創社" in blob) or ("NYCU" in blob) or ("nycu" in blob)
+
+
+def certificate_org(ev: Event | dict) -> str:
+    """Line under the lecture title. The original club keeps its official card wording."""
+    if is_original_club(ev):
+        return "NYCU IEC"
+    club = _club(ev)
+    name = str(club.get("name_en") or club.get("short") or club.get("name_zh") or "the club").strip()
+    return name or "the club"
+
+
 def body_lines(ev: Event) -> list[str]:
     return [
         "In Appreciation of Your Inspiring Sharing on",
         f"“{lecture_title(ev)}”",
-        f"at NYCU IEC on {english_date(ev['date_obj'])}",
+        f"at {certificate_org(ev)} on {english_date(ev['date_obj'])}",
     ]
 
 
@@ -232,7 +257,79 @@ def _compose(ev: Event) -> Image.Image:
 
     for top, line in zip(BODY_TOPS, body_lines(ev)):
         _draw_body_line(d, line, top, BODY_SIZE)
+    if not is_original_club(ev):
+        ImageDraw.Draw(im).rectangle(LOGO_BOX, fill=PAPER)
     return im
+
+
+def certificate_view(im: Image.Image) -> Image.Image:
+    """Show the certificate card, not the page it was sitting on.
+
+    A Canva or browser export sometimes places the 4:3 card on a larger page, or stacks
+    every past certificate in one tall image. Trim the page background, then keep one card.
+    """
+    rgb = im.convert("RGB")
+    rgb = _trim_page_margin(rgb)
+    w, h = rgb.size
+    if w < 8 or h < 8:
+        return rgb
+    ratio = w / h
+    target = 4 / 3
+    if 1.15 <= ratio <= 1.55:
+        return rgb
+    if ratio < target:
+        new_h = max(1, int(round(w / target)))
+        if new_h < h:
+            return rgb.crop((0, 0, w, new_h))
+        return rgb
+    new_w = max(1, int(round(h * target)))
+    if new_w < w:
+        left = (w - new_w) // 2
+        return rgb.crop((left, 0, left + new_w, h))
+    return rgb
+
+
+def _trim_page_margin(im: Image.Image, tol: int = 18) -> Image.Image:
+    """Cut a flat border when every corner is the same page color."""
+    w, h = im.size
+    if w < 4 or h < 4:
+        return im
+    px = im.load()
+    corners = (px[0, 0], px[w - 1, 0], px[0, h - 1], px[w - 1, h - 1])
+
+    def close(a, b) -> bool:
+        return all(abs(int(a[i]) - int(b[i])) <= tol for i in range(3))
+
+    if not all(close(c, corners[0]) for c in corners):
+        return im
+    bg = corners[0]
+    x_step = max(1, w // 200)
+    y_step = max(1, h // 200)
+
+    def row_blank(y: int) -> bool:
+        return all(close(px[x, y], bg) for x in range(0, w, x_step))
+
+    def col_blank(x: int) -> bool:
+        return all(close(px[x, y], bg) for y in range(0, h, y_step))
+
+    top = 0
+    while top < h - 1 and row_blank(top):
+        top += 1
+    bottom = h - 1
+    while bottom > top and row_blank(bottom):
+        bottom -= 1
+    left = 0
+    while left < w - 1 and col_blank(left):
+        left += 1
+    right = w - 1
+    while right > left and col_blank(right):
+        right -= 1
+    pad = 2
+    left, top = max(0, left - pad), max(0, top - pad)
+    right, bottom = min(w - 1, right + pad), min(h - 1, bottom + pad)
+    if right - left < 8 or bottom - top < 8:
+        return im
+    return im.crop((left, top, right + 1, bottom + 1))
 
 
 def render_certificate(ev: Event) -> Image.Image:

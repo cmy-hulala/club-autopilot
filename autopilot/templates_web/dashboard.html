@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Club Autopilot · {{ ev.session_label if ev else "從 Notion 匯入" }}</title>
-<link rel="icon" href="/favicon.ico" type="image/png">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
 <script>
 (function(){ try { var l = localStorage.getItem("lang"); if (l === "en" || l === "zh") { document.documentElement.dataset.lang = l;
   document.cookie = "lang=" + l + ";path=/;max-age=31536000"; } } catch (e) {} })();
@@ -95,6 +95,12 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 .ig figure{flex:1 1 200px;max-width:260px;margin:0}
 .ig img{width:100%;border-radius:10px;border:1px solid var(--line);background:#111;display:block}
 .ig figcaption{margin-top:6px;text-align:center}
+.ig.cards figure{aspect-ratio:4/5;overflow:hidden}
+.ig.cards img{height:100%;object-fit:cover;object-position:center top}
+.ig.shots figure{flex:1 1 140px;max-width:180px}
+.ig.shots img{width:100%;max-height:320px;height:auto;object-fit:contain;background:#fff}
+.cert-frame{max-width:720px;aspect-ratio:4/3;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#f3efe6}
+.cert-frame img{width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:#f3efe6}
 .links a{display:inline-block;margin:0 10px 2px 0;font-size:13px}
 .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
 @media (max-width:800px){.edit-grid,.stats,.action{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.page-layout{grid-template-columns:1fr}.action-col{position:static}}
@@ -223,9 +229,9 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
   <h2>發布（需要你按）</h2>
   <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
   <p class="muted" id="ig-note" style="margin:8px 0 0">{% if ig_draft.status %}IG 草稿：{{ ig_draft.message }}{% if ig_draft.at %}（{{ ig_draft.at }}）{% endif %}{% endif %}</p>
-  <div class="ig" id="ig-shots" style="margin-top:8px">{% for sh in ig_draft.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
+  <div class="ig shots" id="ig-shots" style="margin-top:8px">{% for sh in ig_draft.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
   <p class="muted" id="story-note" style="margin:8px 0 0">{% if ig_story.status %}IG 限動：{{ ig_story.message }}{% if ig_story.at %}（{{ ig_story.at }}）{% endif %}{% endif %}</p>
-  <div class="ig" id="story-shots" style="margin-top:8px">{% for sh in ig_story.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
+  <div class="ig shots" id="story-shots" style="margin-top:8px">{% for sh in ig_story.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
   <p class="muted" id="announce-note" style="margin:8px 0 0">{% if announce.sent_at %}預告信已寄出：{{ announce.sent_at }}（Gmail {{ announce.message_id }}）{% endif %}</p>
   <p class="muted" id="line-note" style="margin:8px 0 0">
     {% if not line.configured %}LINE 未設定：缺少 {{ line.missing|join("、") }}（設環境變數，或放在 <span data-no-i18n>{{ line.config_file }}</span>；不放 repo）。
@@ -233,6 +239,7 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
     {% elif line.last_at %}上次發送：{{ line.last_at }}{% if line.last_same %}（同一份文案）{% endif %}。
     {% endif %}
   </p>
+  </div>
 </div>
 
 <div class="card" id="ig-music">
@@ -313,7 +320,7 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 
 <div class="card">
   <h2>IG 圖卡</h2>
-  <div class="ig">
+  <div class="ig cards">
     {% for img in ig_cards %}
     <figure>
       <a href="{{ img.href }}" target="_blank" rel="noopener"><img src="{{ img.href }}" alt="{{ img.name }}"></a>
@@ -328,19 +335,16 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 
 <div class="card">
   <h2>講者感謝狀</h2>
-  {% if cert_url or cert_png_url %}
+  {% if cert_view_url or cert_url or cert_png_url %}
   <p class="dl">
     {% if cert_pdf_download %}<a class="btn sm" href="{{ cert_pdf_download }}">下載 PDF</a>{% endif %}
     {% if cert_png_download %}<a class="btn ghost sm" href="{{ cert_png_download }}">下載 PNG</a>{% endif %}
     {% if cert_url %}<a class="btn ghost sm" href="{{ cert_url }}" target="_blank" rel="noopener">在瀏覽器開啟 PDF</a>{% endif %}
   </p>
-  {% if cert_png_url %}
-  <img class="cert-img" src="{{ cert_png_url }}" alt="感謝狀">
-  {% endif %}
-  {% if cert_url %}
-  <object class="preview cert-pdf" data="{{ cert_url }}" type="application/pdf" title="感謝狀 PDF">
-    {% if not cert_png_url %}<p class="muted">瀏覽器無法內嵌 PDF，請改用上方按鈕下載或開啟。</p>{% endif %}
-  </object>
+  {% if cert_view_url %}
+  <div class="cert-frame">
+    <img src="{{ cert_view_url }}" alt="感謝狀">
+  </div>
   {% endif %}
   {% else %}
   <p class="muted">還沒有感謝狀預覽。</p>

@@ -38,7 +38,7 @@ def to_ics(ev: Event, rows: list[dict]) -> str:
             f"UID:{ev.raw['date']}-{r['key']}@club-autopilot",
             f"DTSTART;TZID=Asia/Taipei:{day}T120000",
             f"DTEND;TZID=Asia/Taipei:{day}T121500",
-            f"SUMMARY:[創創社] {r['label']}（檢查草稿後手動寄出）",
+            f"SUMMARY:[{(ev['club'] or {}).get('short') or (ev['club'] or {}).get('name_zh') or '社團'}] {r['label']}（檢查草稿後手動寄出）",
             f"DESCRIPTION:{r['file']} → {r['audience']}",
             "END:VEVENT",
         ]

@@ -148,7 +148,7 @@ def run_pipeline(event_path: str | Path, mode: str = "preview", out_root: Path |
     with r.step("Canva IG 圖卡"):
         r.manifest["canva"] = canva_step.run(ev, r.dir / "ig")
     with r.step("講者感謝狀 PDF"):
-        make_certificate(ev, r.dir / "感謝狀.pdf")
+        make_certificate(ev, r.dir / "感謝狀.pdf", png_path=r.dir / "感謝狀.png")
     with r.step("抓報名名單 → 提醒信密件副本"):
         if mode == "google":
             from . import forms_api

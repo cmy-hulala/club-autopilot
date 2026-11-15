@@ -18,7 +18,13 @@ from .event import Event
 
 PROFILE = Path(os.environ.get("LOCALAPPDATA") or Path.home() / ".local" / "share") / "club-autopilot" / "linktree-profile"
 ADMIN = "https://linktr.ee/admin"
-OLD_LINK_PATTERN = r"陽明交大創創社｜\d{2}/\d{2} 課前表單"
+
+
+def old_link_pattern(ev: Event) -> str:
+    """Hide earlier signup links for this club. The title shape comes from the club's own short name."""
+    club = ev["club"] if isinstance(ev["club"], dict) else {}
+    short = str(club.get("short") or club.get("name_zh") or "社團").strip() or "社團"
+    return re.escape(short) + r"｜\d{2}/\d{2} 課前表單"
 
 
 def current_public_links(public_url: str) -> list[dict]:
@@ -39,14 +45,15 @@ def current_public_links(public_url: str) -> list[dict]:
 
 def plan(ev: Event, form_url: str, read_public: bool = True) -> dict:
     title = ev["signup_form_title"]
+    pattern = old_link_pattern(ev)
     public = current_public_links(ev["club"].get("linktree_url", "")) if read_public and ev["club"].get("linktree_url") else []
-    to_hide = [l for l in public if l.get("title") and re.search(OLD_LINK_PATTERN, l["title"]) and l["title"] != title]
+    to_hide = [l for l in public if l.get("title") and re.search(pattern, l["title"]) and l["title"] != title]
     return {
         "public_page": ev["club"].get("linktree_url"),
         "current_links": public,
         "will_hide": to_hide,
         "add": {"title": title, "url": form_url},
-        "hide_where_title_matches": OLD_LINK_PATTERN,
+        "hide_where_title_matches": pattern,
         "keep_visible": [form_url],
         "profile_dir": str(PROFILE),
         "needs_human": ["第一次要執行 run_linktree_login.cmd，用社團 Linktree 帳號登入（不是個人帳號）；登入狀態會保存在這個資料夾以外的 profile，之後同步都在背景跑"],

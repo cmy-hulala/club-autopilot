@@ -99,6 +99,34 @@ def _post(client, **data):
     return client.post("/onboarding", data=data, follow_redirects=True)
 
 
+def test_header_and_finish_use_the_saved_club_not_a_hardcoded_one(client, app):
+    home = client.get("/").get_data(as_text=True)
+    header = home.split("<header", 1)[1].split("</header>", 1)[0]
+    assert "社團活動自動化" in header
+    assert "陽明交大" not in header
+    assert "NYCU" not in header
+    assert "club_logo.png" not in header
+    store = launchpad.Store(app.config["OUT"], app.config["ROOT"])
+    progress = launchpad.fresh_progress()
+    progress["current"] = "done"
+    progress["profile"] = dict(PROFILE)
+    store.save_progress(progress)
+    html = client.get("/onboarding").get_data(as_text=True)
+    assert "North Campus Builders" in html
+    assert "完成設定並儲存" in html
+    assert "不會上傳" in html
+    assert "不會寄出或發送" in html
+    assert "autopilot_local.yaml" in html
+    assert "寫入本機設定" not in html
+    header = html.split("<header", 1)[1].split("</header>", 1)[0]
+    assert "陽明交大" not in header
+    assert "North Campus Builders" in header
+    fav = client.get("/favicon.ico")
+    assert fav.status_code == 200
+    logo = ROOT / "assets" / "club_logo.png"
+    assert fav.data != logo.read_bytes()
+
+
 def test_strings_translate_and_do_not_clobber_existing_copy():
     assert i18n.translate("創創社") == "NYCU IEC"
     assert i18n.translate("陽明交大創創社社課自動化") == "NYCU IEC lecture automation"
@@ -199,7 +227,9 @@ def test_wizard_dry_run_sends_nothing_and_writes_outside_the_repo(client, tmp_pa
     _post(client, action="next", step="dryrun")
     done = _post(client, action="finish", step="done")
     assert done.status_code == 200
-    assert "沒有寫進程式庫" in done.get_data(as_text=True)
+    saved_page = done.get_data(as_text=True)
+    assert "沒有上傳" in saved_page
+    assert "不會寄出或發送" in saved_page or "沒有寄出或發送" in saved_page
     config_path = tmp_path / "private" / "autopilot_local.yaml"
     saved = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     assert saved["club_name"] == "North Campus Builders"

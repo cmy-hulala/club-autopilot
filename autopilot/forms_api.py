@@ -28,20 +28,26 @@ def _scale(title, required=True):
             "scaleQuestion": {"low": 1, "high": 10, "lowLabel": "非常不同意", "highLabel": "非常同意"}}}}
 
 
+def _club_short(ev: Event) -> str:
+    club = ev["club"] if isinstance(ev["club"], dict) else {}
+    return str(club.get("short") or club.get("name_zh") or "社團").strip() or "社團"
+
+
 def signup_items(ev: Event) -> list[dict]:
+    short = _club_short(ev)
     return [
         {"title": ev["title"], "textItem": {}},
         _text("姓名"),
-        _text("學校／系級", "例：陽明交大 資工系 大二"),
+        _text("學校／系級", "例：學校、科系、年級"),
         _text("聯絡方式", "手機或 Line ID，活動臨時異動時聯絡用"),
         _choice("身分類別", ev["identity_options"], help_="費用請於活動當天現場繳交。"),
         _choice("是否參加本期社課", [{"value": "會參加", "goToAction": "NEXT_SECTION"},
                                   {"value": "無法參加", "goToAction": "SUBMIT_FORM"}]),
         {"title": "活動相關", "pageBreakItem": {}},
-        _choice("如何得知本次活動", ["創創社 Email", "創創社 Line 群組", "Instagram", "朋友／幹部邀請", "其他"], "CHECKBOX", required=False),
+        _choice("如何得知本次活動", [f"{short} Email", f"{short} Line 群組", "Instagram", "朋友／幹部邀請", "其他"], "CHECKBOX", required=False),
         _text("最想詢問講者的問題", required=False, paragraph=True),
         _choice("是否同意活動攝影及照片使用", ["同意", "不同意（拍攝時會避開你）"],
-                help_="活動中會拍照紀錄，照片可能用於創創社 Instagram 等社群與活動紀錄"),
+                help_=f"活動中會拍照紀錄，照片可能用於{short}的社群與活動紀錄"),
         _text("其他備註", required=False, paragraph=True),
     ]
 

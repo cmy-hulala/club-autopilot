@@ -39,6 +39,23 @@ def test_speaker_names_split_zh_and_en():
         "周世恩", "Shih-En Chou")
 
 
+def test_other_clubs_are_not_labeled_nycu_and_drop_the_bundled_mark():
+    from autopilot.certificate import certificate_view, render_certificate
+    ev = load_event(Path(__file__).resolve().parent.parent / "samples" / "demo-club" / "lecture.yaml")
+    lines = body_lines(ev)
+    assert "NYCU" not in " ".join(lines)
+    assert "Demo University Startup Club" in lines[-1]
+    im = render_certificate(ev)
+    # The bundled rocket sits in this box. A new club's card covers it with paper.
+    assert im.getpixel((1630, 2010))[0] > 200
+    page = Image.new("RGB", (1200, 800), (240, 240, 240))
+    card = Image.new("RGB", (600, 450), (20, 40, 60))
+    page.paste(card, (300, 175))
+    cropped = certificate_view(page)
+    assert abs(cropped.size[0] / cropped.size[1] - 4 / 3) < 0.08
+    assert cropped.getpixel((cropped.size[0] // 2, cropped.size[1] // 2)) == (20, 40, 60)
+
+
 def test_body_uses_official_wording_and_full_title():
     ev = load_event(EV)
     assert body_lines(ev) == [

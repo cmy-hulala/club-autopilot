@@ -21,7 +21,6 @@ from .pipeline import ROOT, run_pipeline
 from .local_settings import forms_account as _forms_account, forms_account_local
 
 FORMS_ACCOUNT = _forms_account()
-CLUB_ACCOUNT = "nycu.iec@gmail.com"
 WEB_TEMPLATES = Path(__file__).resolve().parent / "templates_web"
 FIELDS = [
     ("session_no", "堂次（數字）"),
@@ -45,7 +44,7 @@ ACTION_META = [
     ("qr", "更新 Canva QR（ig_04）", "會依目前的課前表單網址更新 QR 並更新 ig_04 圖卡。確定？"),
     ("ig", "準備 IG 圖卡（不發文）", "會檢查 ig_01～ig_04 四張圖卡都在。不會發 IG。確定？"),
     ("cert", "講者感謝狀", "已有正式感謝狀就沿用不覆蓋；沒有才產生。確定？"),
-    ("drafts", "Gmail 草稿 3 封（社團信箱，不寄出）", "會在社團信箱 nycu.iec 建立預告信、當天提醒信、課後信草稿，絕對不會寄出。已存在的草稿不會重複建立。確定？"),
+    ("drafts", "Gmail 草稿 3 封（社團信箱，不寄出）", "會在社團信箱建立預告信、當天提醒信、課後信草稿，絕對不會寄出。已存在的草稿不會重複建立。確定？"),
     ("linktree", "同步 Linktree（背景）", "會在背景（不開視窗）新增本期課前表單連結（已存在就略過）、隱藏上一期（不刪除）。確定？"),
     ("stats", "更新報名／回饋人數", "會讀課前／課後表單回覆，只更新人數（不列出 Email）。確定？"),
 ]
@@ -519,7 +518,10 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
             if lt.get("at"):
                 msg += f"（{lt['at']}）"
             msg += "。"
-            links = _linktree_links(slug)
+            page = ""
+            if ev is not None:
+                page = str((ev["club"] or {}).get("linktree_url") or "")
+            links = _linktree_links(slug, page)
             cur = actions["linktree"]
             if cur.get("status") != "done" or cur.get("message") != msg or cur.get("links") != links:
                 actions["linktree"] = {"status": "done", "message": msg, "links": links}
@@ -541,8 +543,10 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
         data = _read_json(max(found, key=lambda f: f.stat().st_mtime), {})
         return data if isinstance(data, dict) else None
 
-    def _linktree_links(slug: str) -> list[dict]:
-        links = [{"label": "Linktree", "href": "https://linktr.ee/nycuiec"}]
+    def _linktree_links(slug: str, page_url: str = "") -> list[dict]:
+        links = []
+        if str(page_url or "").startswith("https://"):
+            links.append({"label": "Linktree", "href": page_url})
         for name, label in LINKTREE_SHOTS.items():
             if any((d / name).is_file() for d in _linktree_dirs(slug)):
                 links.append({"label": label, "href": f"/linktree-shot/{slug}/{name}"})
@@ -1147,7 +1151,7 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
                 "check_rows": [], "run_name": "", "mail": {}, "mail_downloads": {},
                 "line_copy": "", "ig_copy": "", "line_download": "", "ig_copy_download": "",
                 "ig_cards": [], "canva_url": "", "canva_id": "", "cert_url": "",
-                "cert_png_url": "", "cert_pdf_download": "", "cert_png_download": "",
+                "cert_png_url": "", "cert_view_url": "", "cert_pdf_download": "", "cert_png_download": "",
                 "timeline": [], "ics_url": "", "feedback_url": "",
             }
         ev = load_ev(slug)
@@ -1167,7 +1171,7 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
         mail_downloads = {"announce": "", "reminder": "", "followup": ""}
         line_copy = ig_copy = ""
         line_download = ig_copy_download = ""
-        canva_url = canva_id = cert_url = cert_png_url = ""
+        canva_url = canva_id = cert_url = cert_png_url = cert_view_url = ""
         cert_pdf_download = cert_png_download = ics_url = feedback_url = ""
         if run_dir:
             m = _read_json(run_dir / "manifest.json", {})
@@ -1213,6 +1217,8 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
         if certs["png"]:
             cert_png_url = url_for("cert_file", slug=slug, kind="png")
             cert_png_download = url_for("cert_file", slug=slug, kind="png", download=1)
+        if certs["pdf"] or certs["png"]:
+            cert_view_url = url_for("cert_view", slug=slug)
         return {
             "msg": msg,
             "ev": ev,
@@ -1247,6 +1253,7 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
             "canva_id": canva_id,
             "cert_url": cert_url,
             "cert_png_url": cert_png_url,
+            "cert_view_url": cert_view_url,
             "cert_pdf_download": cert_pdf_download,
             "cert_png_download": cert_png_download,
             "timeline": timeline,
@@ -1256,10 +1263,25 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
 
     @app.get("/favicon.ico")
     def favicon():
-        logo = root / "assets" / "club_logo.png"
-        if not logo.is_file():
+        icon = root / "assets" / "favicon.ico"
+        if icon.is_file():
+            return send_from_directory(icon.parent, icon.name, mimetype="image/x-icon")
+        png = root / "assets" / "favicon.png"
+        if png.is_file():
+            return send_from_directory(png.parent, png.name, mimetype="image/png")
+        from io import BytesIO
+        from PIL import Image
+        buf = BytesIO()
+        Image.new("RGB", (32, 32), (201, 141, 23)).save(buf, format="PNG")
+        return Response(buf.getvalue(), mimetype="image/png")
+
+    @app.get("/brand-logo")
+    def brand_logo():
+        raw = launchpad.saved_club_logo()
+        if not raw:
             abort(404)
-        return send_from_directory(logo.parent, logo.name, mimetype="image/png")
+        path = Path(raw)
+        return send_from_directory(path.parent, path.name)
 
     @app.get("/asset/<path:name>")
     def asset(name):
@@ -1298,6 +1320,30 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
         if out_root.resolve() not in d.parents or not d.is_dir():
             abort(404)
         return _send(d, rel, Path(rel).name)
+
+    @app.get("/cert/<slug>/view.png")
+    def cert_view(slug):
+        """PNG of the certificate card only, even when the export is a full page."""
+        from io import BytesIO
+        from PIL import Image
+        from .certificate import certificate_view, render_certificate
+        paths = official_cert_paths(out_root, slug, latest_run_dir(slug))
+        im = None
+        if paths.get("png") and paths["png"].is_file():
+            try:
+                im = certificate_view(Image.open(paths["png"]))
+            except Exception:
+                im = None
+        if im is None and paths.get("pdf"):
+            try:
+                im = render_certificate(load_event(event_path(slug)))
+            except Exception:
+                im = None
+        if im is None:
+            abort(404)
+        buf = BytesIO()
+        im.save(buf, format="PNG")
+        return Response(buf.getvalue(), mimetype="image/png")
 
     @app.get("/cert/<slug>/<kind>")
     def cert_file(slug, kind):
@@ -1343,7 +1389,18 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
     def render_page(name: str, **ctx) -> str:
         from . import i18n
         from .launchpad_i18n import T as ui
-        ctx = {**ctx, "lang": i18n.lang_from(request.cookies), "i18n_json": i18n.payload(), "ui": ui}
+        club_name = ""
+        try:
+            club_name = launchpad.saved_club_name()
+        except Exception:
+            club_name = ""
+        logo = ""
+        try:
+            logo = launchpad.saved_club_logo()
+        except Exception:
+            logo = ""
+        brand = {"name": club_name, "logo_url": "/brand-logo" if logo else "", "alt": club_name or "Club"}
+        ctx = {**ctx, "lang": i18n.lang_from(request.cookies), "i18n_json": i18n.payload(), "ui": ui, "brand": brand}
         return app.jinja_env.get_template(name).render(**ctx)
 
     def render_dashboard(ctx: dict) -> str:
@@ -1972,6 +2029,11 @@ def _form_links(state: dict) -> list[dict]:
 
 
 def _draft_links(state: dict) -> list[dict]:
+    from .local_settings import get as _setting
+    inbox = str(_setting("club_email", "CLUB_GOOGLE_ACCOUNT", "") or "").strip()
+    href = "https://mail.google.com/mail/u/#drafts"
+    if "@" in inbox:
+        href = f"https://mail.google.com/mail/u/?authuser={inbox}#drafts"
     links = []
     for d in state.get("drafts") or []:
         did = d.get("draft_id")
@@ -1980,7 +2042,7 @@ def _draft_links(state: dict) -> list[dict]:
         label = d.get("label") or d.get("file") or "草稿"
         if not str(label).endswith("草稿"):
             label = f"{label}草稿"
-        links.append({"label": label, "href": "https://mail.google.com/mail/u/?authuser=nycu.iec@gmail.com#drafts"})
+        links.append({"label": label, "href": href})
     return links
 
 

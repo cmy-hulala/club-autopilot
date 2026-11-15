@@ -236,4 +236,5 @@ def test_skip_line_and_guides_translate(client):
     assert "Linktree" in skipped.get_data(as_text=True)
     fav = client.get("/favicon.ico")
     assert fav.status_code == 200
-    assert fav.mimetype == "image/png"
+    assert fav.mimetype in ("image/x-icon", "image/vnd.microsoft.icon")
+    assert fav.data != (ROOT / "assets" / "club_logo.png").read_bytes()

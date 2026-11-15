@@ -106,7 +106,7 @@ Paste this as **one line** into Windows PowerShell 5.1. It can be the window tha
 powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/cmy-hulala/club-autopilot/launchpad/setup.ps1 | iex"
 ```
 
-The script installs Python 3.12 and Git with winget if they are missing, refreshes PATH in this window, ignores the Microsoft Store `python` alias, clones into `%USERPROFILE%\club-autopilot`, checks out `launchpad`, creates `.venv`, installs dependencies, installs Playwright Chromium, starts the site on port 5050, and opens http://127.0.0.1:5050/onboarding .
+The script installs Python 3.12 and Git with winget if they are missing, refreshes PATH in this window, ignores the Microsoft Store `python` alias, clones into `%USERPROFILE%\club-autopilot`, checks out `launchpad`, and on an existing clone runs `git pull --ff-only origin launchpad`. It creates `.venv`, installs dependencies, downloads Android platform-tools when `adb` is missing, installs Playwright Chromium, starts the site on port 5050, and opens http://127.0.0.1:5050/onboarding .
 
 Leave the server window open. Closing it stops the site.
 
@@ -127,11 +127,11 @@ If Windows asks for an install confirmation (UAC), click Yes. Then fill the onbo
 - **Execution policy blocks a downloaded `.ps1`.** Use the one-liner above. It already passes `-ExecutionPolicy Bypass`.
 - **`winget` is not found.** Install "App Installer" from the Microsoft Store, then paste the same line again.
 - **Port 5050 never opens.** Another program is using it, or the server window shows an error. Close that program, close the server window, and paste the line again.
-- **The page is already open and you want a code update.** Close the server window first, then paste the one-liner again. While the server is running, the script only opens the browser.
+- **The page is already open and you want a code update.** Paste the one-liner again. It pulls the latest `launchpad` even when a copy is already on the computer. Then close the server window and paste it once more so the site restarts on that code. `start.ps1` also runs `git pull --ff-only origin launchpad` before it opens the site.
 - **LINE asks for a group ID.** Stay on the LINE step. If you have no official account, choose the from-zero guide. Paste the channel access token and channel secret there (they are stored only in the private folder and shown masked). Then add the bot to the group and send a message. If the automatic tunnel cannot start, paste the group ID in the manual field. You can also skip LINE and continue.
 - **Instagram asks for a phone serial.** That step is Android only. iPhone users should skip it. Plug in the phone, allow USB debugging, and press detect. `setup.ps1` downloads Android platform-tools when `adb` is missing.
 - **Linktree or Canva account is missing.** Choose “I don't have one yet” and follow the link. Canva wants a design URL that contains `/design/`, or the included sample template. The note field is optional.
-- **The browser log shows favicon 404.** Reload after this update. `/favicon.ico` is the club logo.
+- **The browser log shows favicon 404.** Reload after this update. `/favicon.ico` is a small gold icon shipped with the app. It is not a club logo.
 
 ### Manual install (fallback)
 
@@ -149,7 +149,7 @@ python -m autopilot web --port 5050
 
 On Windows, `python` must be the real install, not the Store alias. If `python` does nothing, use the full path `%LOCALAPPDATA%\Programs\Python\Python312\python.exe`.
 
-Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 146 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
+Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 148 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
 
 ### Run the dashboard
 
@@ -175,7 +175,7 @@ Use the 中文 / English toggle in the header. Generated lecture text stays Chin
 7. **Canva.** Optional note: `Thursday template`. The test only checks that the job-file module imports. This program stores no Canva password.
 8. **Import a sample event.** Press **匯入範例活動**. The page shows a fictional lecture (`samples/demo-club/lecture.yaml`, Demo University Startup Club) with its title, speaker, date, and place. The click copies that file into your private folder. It does not post or send anything, and it does not use the real club fixture. The next dry-run builds the signup form, emails, and LINE/IG copy from it. Later, replace it from the dashboard with **從 Notion 匯入**, or copy that yaml and edit it.
 9. **Preview dry-run.** Press **開始預覽演練**. This runs the pipeline in `preview` mode only. It writes local files. It does not create forms, Gmail drafts, LINE pushes, Linktree edits, or Instagram posts. The page says that nothing was sent.
-10. **Save.** Press **寫入本機設定**.
+10. **Save.** Press **完成設定並儲存** (Finish and save settings). The page names the file on this computer. Nothing is uploaded or sent.
 
 The club file is written **outside the git repo**:
 
@@ -244,7 +244,7 @@ Then go back to http://127.0.0.1:5050 . **在儀表板打開範例活動** opens
 ## Tests
 
 ```bash
-pytest -q        # 146 tests
+pytest -q        # 148 tests
 ```
 
 Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, the module catalog, and the Windows `setup.ps1` one-liner.

@@ -1,7 +1,7 @@
 {%- import "_macros.j2" as m with context -%}
-<!-- 主旨：【陽明交大創創社】第{{ n_zh }}堂社課預告｜{{ title }} -->
+<!-- 主旨：【{{ club.short }}】第{{ n_zh }}堂社課預告｜{{ title }} -->
 {{ m.wrap_open() }}
-{{ m.p("創創社的夥伴們，大家好！") }}
+{{ m.p(club.short ~ "的夥伴們，大家好！") }}
 <h2 style="margin:0 0 6px 0;font-family:{{ font }};font-size:21px;line-height:1.5;color:#222222;">{{ session_label }}｜{{ md_week }}</h2>
 <h3 style="margin:0 0 20px 0;font-family:{{ font }};font-size:18px;line-height:1.5;color:#8a4f00;">{{ title_main }}{% if title_sub %}<br>{{ title_sub }}{% endif %}</h3>
 {{ m.p("<strong>" ~ hook ~ "</strong>" ~ hook_lead ~ "完整的講者與社課介紹放在信件下方。") }}

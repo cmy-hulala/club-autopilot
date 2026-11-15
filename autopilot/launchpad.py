@@ -946,10 +946,59 @@ def _guide_for(progress: dict, step: str) -> dict:
 
 
 def attach_config_path(view: dict, store: Store, progress: dict) -> dict:
-    if progress.get("config_written"):
-        view["config_path"] = str(store.config_path)
-        view["show_config_path"] = True
+    """Always show where Finish will write. The file stays on this computer."""
+    view["config_path"] = str(store.config_path)
+    view["show_config_path"] = True
     return view
+
+
+def saved_club_name() -> str:
+    """Club name from the local settings file, then from onboarding progress. Empty if neither is set."""
+    name = ""
+    try:
+        from .local_settings import load
+        data = load() or {}
+        if isinstance(data, dict):
+            name = str(data.get("club_name") or "").strip()
+    except Exception:
+        name = ""
+    if not name:
+        try:
+            path = private_dir() / "onboarding_progress.json"
+            if path.is_file():
+                loaded = json.loads(path.read_text(encoding="utf-8"))
+                profile = loaded.get("profile") if isinstance(loaded, dict) else None
+                if isinstance(profile, dict):
+                    name = str(profile.get("club_name") or "").strip()
+        except Exception:
+            name = ""
+    return name[:80]
+
+
+def saved_club_logo() -> str:
+    """A logo path the club saved themselves. The bundled mark is never returned."""
+    raw = ""
+    try:
+        from .local_settings import load
+        data = load() or {}
+        if isinstance(data, dict):
+            raw = str(data.get("logo") or data.get("club_logo") or "").strip()
+    except Exception:
+        raw = ""
+    if not raw:
+        return ""
+    path = Path(raw).expanduser()
+    if not path.is_file():
+        return ""
+    if path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        return ""
+    bundled = (ROOT / "assets" / "club_logo.png").resolve()
+    try:
+        if path.resolve() == bundled:
+            return ""
+    except OSError:
+        return ""
+    return str(path.resolve())
 
 
 def modules_view(state: dict, focus: str = "", notice: str = "", banner: dict | None = None) -> dict:

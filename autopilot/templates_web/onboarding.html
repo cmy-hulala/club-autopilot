@@ -187,6 +187,8 @@
   {% if dry.detail %}<pre data-no-i18n>{{ dry.detail }}</pre>{% endif %}
   {% endif %}
   {% if step.id == 'done' %}
+  <p>{{ ui.finish_explain }}</p>
+  {% if config_path %}<p class="muted" data-no-i18n>{{ config_path }}</p>{% endif %}
   <ul>
     {% for row in review %}
     <li>{{ row.name }} <span class="pill {{ row.cls }}">{{ row.badge }}</span></li>

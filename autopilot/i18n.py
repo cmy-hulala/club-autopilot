@@ -154,6 +154,7 @@ PHRASES: dict[str, str] = {
     "已有正式感謝狀就沿用不覆蓋；沒有才產生。確定？": "Keep an existing official certificate; create one only if missing?",
     "Gmail 草稿 3 封（社團信箱，不寄出）": "3 Gmail drafts (club inbox, not sent)",
     "會在社團信箱 nycu.iec 建立預告信、當天提醒信、課後信草稿，絕對不會寄出。已存在的草稿不會重複建立。確定？": "Create the announcement, same-day reminder and follow-up drafts in the club inbox nycu.iec? They are never sent, and existing drafts are not duplicated.",
+    "會在社團信箱建立預告信、當天提醒信、課後信草稿，絕對不會寄出。已存在的草稿不會重複建立。確定？": "Create the announcement, same-day reminder and follow-up drafts in the club inbox? They are never sent, and existing drafts are not duplicated.",
     "同步 Linktree（背景）": "Sync Linktree (background)",
     "會在背景（不開視窗）新增本期課前表單連結（已存在就略過）、隱藏上一期（不刪除）。確定？": "Add this lecture's form link to Linktree in the background (skipped if present) and hide the previous one (not deleted)?",
     "更新報名／回饋人數": "Update registration / feedback counts",

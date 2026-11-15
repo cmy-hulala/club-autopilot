@@ -44,7 +44,10 @@ def test_index_shows_import_and_readonly_event(tmp_path):
     html = r.get_data(as_text=True)
     assert "從 Notion 匯入" in html
     assert "Club Autopilot" in html
-    assert "club_logo.png" in html
+    header = html.split("<header", 1)[1].split("</header>", 1)[0]
+    assert "club_logo.png" not in header
+    assert "陽明交大" not in header
+    assert "社團活動自動化" in header
     assert "謝慈" in html
     assert "從職涯迷惘" in html
     assert "截止提醒" not in html
@@ -244,15 +247,19 @@ def test_official_certificate_preferred_and_downloadable(tmp_path):
     html = c.get(f"/event/{SLUG}").get_data(as_text=True)
     assert "下載 PDF" in html
     assert "下載 PNG" in html
-    assert 'type="application/pdf"' in html
     assert f"/cert/{SLUG}/pdf" in html
-    # The certificate pane must embed the official PDF, not a screenshot.
-    cert_block = html.split("講者感謝狀", 1)[1].split("時間軸", 1)[0]
+    # The certificate pane shows the card image, not a full-page PDF viewer.
+    cert_block = html.split("<h2>講者感謝狀</h2>", 1)[1].split("<dialog", 1)[0]
     assert "form_banner_check" not in cert_block
-    assert "object" in cert_block and "application/pdf" in cert_block
-    assert f"/cert/{SLUG}/png" in cert_block
-    assert "cert-img" in cert_block
+    assert "cert-frame" in cert_block
+    assert f"/cert/{SLUG}/view.png" in cert_block
+    assert "object" not in cert_block
+    assert 'class="preview' not in cert_block
     assert "在瀏覽器開啟 PDF" in cert_block
+    view = c.get(f"/cert/{SLUG}/view.png")
+    assert view.status_code == 200
+    assert view.mimetype == "image/png"
+    assert view.data[:8] == b"\x89PNG\r\n\x1a\n"
 
     preview = c.get(f"/cert/{SLUG}/pdf")
     assert preview.status_code == 200

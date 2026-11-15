@@ -102,7 +102,9 @@ def build_event(raw: dict, path: Path | None = None) -> Event:
     s_compact = raw["start"].replace(":", "") + "00"
     e_compact = raw["end"].replace(":", "") + "00"
     dates = f"{d:%Y%m%d}T{s_compact}/{d:%Y%m%d}T{e_compact}"
-    cal_text = f"創創社第{n_zh}堂社課｜{title}"
+    club = raw.get("club") if isinstance(raw.get("club"), dict) else {}
+    club_short = str(club.get("short") or club.get("name_zh") or "社團").strip() or "社團"
+    cal_text = f"{club_short}第{n_zh}堂社課｜{title}"
     cal_details = f"講者：{sp['name']}｜{sp['title']}\n課前表單：{short_url}"
     calendar_url = (
         "https://calendar.google.com/calendar/render?action=TEMPLATE"
@@ -110,7 +112,6 @@ def build_event(raw: dict, path: Path | None = None) -> Event:
         f"&location={q(location)}&details={q(cal_details)}"
     )
     maps_url = "https://www.google.com/maps/search/?api=1&query=" + q(location)
-    club = raw.get("club", {})
     ev.ctx = {
         **raw,
         "club": club,
@@ -142,8 +143,8 @@ def build_event(raw: dict, path: Path | None = None) -> Event:
         "assumed": raw.get("assumed", []),
         "short_title": raw.get("short_title") or main,
         "hook_lead": str(raw.get("hook_lead", "")).replace("{session}", f"第{n_zh}堂社課"),
-        "signup_form_title": f"{raw['semester']} 陽明交大創創社｜{d.month:02d}/{d.day:02d} 課前表單",
-        "feedback_form_title": f"{raw['semester']} 陽明交大創創社｜{d.month:02d}/{d.day:02d} 課後調查",
+        "signup_form_title": f"{raw['semester']} {club_short}｜{d.month:02d}/{d.day:02d} 課前表單",
+        "feedback_form_title": f"{raw['semester']} {club_short}｜{d.month:02d}/{d.day:02d} 課後調查",
         "signup_confirmation": f"已收到你的回覆，會參加的夥伴，我們 {md_week(d)}{raw['start']}–{raw['end']} 在{raw['room']} 見!",
         "feedback_confirmation": f"已收到你的回饋，謝謝參與 {md_week(d)} 的夥伴！期待下次再與你相聚。",
     }

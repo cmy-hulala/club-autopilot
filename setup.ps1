@@ -184,6 +184,8 @@ if ($PSScriptRoot) {
         return $null
     }
 
+    $script:DidUpdateRepo = $false
+
     function Update-Repo([string]$Repo, [string]$Git) {
         Say "正在更新 launchpad 分支… / Updating the launchpad branch…"
         Push-Location -LiteralPath $Repo
@@ -205,6 +207,7 @@ if ($PSScriptRoot) {
             if ($LASTEXITCODE -ne 0) {
                 Fail "無法快轉更新 launchpad（本地提交和遠端不一致）。 / Could not fast-forward launchpad. Local commits differ from the remote."
             }
+            $script:DidUpdateRepo = $true
         } finally {
             Pop-Location
         }
@@ -256,10 +259,23 @@ if ($PSScriptRoot) {
         Say "這個視窗開在 Windows 系統資料夾，已改到使用者家目錄，避免把專案載到 System32。 / This window was opened in a Windows system folder. Moved to your home directory so the project is not cloned into System32."
     }
 
+    Update-SessionPath
+    $existing = Find-ExistingRepo
+    if (-not $existing) {
+        $homeDir = $HOME
+        if (-not $homeDir) { $homeDir = $env:USERPROFILE }
+        $dest = Join-Path $homeDir 'club-autopilot'
+        if (Test-RepoDir $dest) { $existing = [System.IO.Path]::GetFullPath($dest) }
+    }
+    if ($existing) {
+        $gitEarly = Find-RealGit
+        if ($gitEarly) { Update-Repo $existing $gitEarly }
+    }
+
     if (Test-OnboardingUp) {
         Say "網站已經在跑，正在打開初次設定。 / The site is already running. Opening the onboarding page."
         Open-Onboarding
-        Say "若要更新程式，先關掉標題含 powershell 的伺服器視窗，再貼一次同一行。 / To update, close the server window, then paste the same line again."
+        Say "重新貼上這一行會把已有的專案更新到最新的 launchpad。若伺服器還開著，請先關掉那個視窗再貼一次，網站才會用新程式。 / Pasting this line again updates an existing clone to the latest launchpad. If the server window is still open, close it and paste the line again so the site restarts."
         return
     }
 
@@ -290,7 +306,7 @@ if ($PSScriptRoot) {
                 Fail "資料夾已存在，但不是 Club Autopilot 的 git 專案：$dest 。請改名後再貼一次。 / That folder already exists and is not this git repo. Rename it and paste the line again."
             }
             $repo = [System.IO.Path]::GetFullPath($dest)
-            Update-Repo $repo $git
+            if (-not $script:DidUpdateRepo) { Update-Repo $repo $git }
         } else {
             Say "正在把專案下載到 $dest … / Cloning the project into $dest …"
             & $git clone --branch $Branch --single-branch $RepoUrl $dest
@@ -300,7 +316,7 @@ if ($PSScriptRoot) {
             $repo = [System.IO.Path]::GetFullPath($dest)
         }
     } else {
-        Update-Repo $repo $git
+        if (-not $script:DidUpdateRepo) { Update-Repo $repo $git }
     }
     Set-Location -LiteralPath $repo
     Say "專案位置：$repo / Project folder: $repo"
