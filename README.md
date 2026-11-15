@@ -4,7 +4,7 @@
 
 Built solo for **STEMergent Hacks 2026** (Hackathon pathway, working prototype) for **陽明交大創創社 / NYCU Innovation & Entrepreneurship Club (NYCU IEC)**. It was demoed live on the club's real lecture of 2026-11-25 (Session 6, speaker 謝慈 Candice).
 
-**LaunchPad Hacks** judges: use the `launchpad` branch. Setup with fake data, the first-time wizard, and a dry-run are in [LaunchPad judges](#launchpad-judges). That branch is not merged into `main`.
+**LaunchPad Hacks** judges: use the `launchpad` branch. On Windows, one PowerShell line installs everything and opens the wizard. See [Windows quick start](#windows-quick-start). Setup with fake data and a dry-run are in [LaunchPad judges](#launchpad-judges). That branch is not merged into `main`.
 
 ▶ **Demo video (2:16):** https://youtu.be/mQXyeGE0Whc
 
@@ -98,20 +98,54 @@ This section is for the **LaunchPad Hacks** submission on the `launchpad` branch
 
 `main` is left unchanged. Check out `launchpad` and stay on it.
 
-### Install
+### Windows quick start
+
+Paste this as **one line** into Windows PowerShell 5.1. It can be the window that opens in `C:\WINDOWS\System32`. You do not type `python`, `git`, `cd`, or `pip` yourself.
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/cmy-hulala/club-autopilot/launchpad/setup.ps1 | iex"
+```
+
+The script installs Python 3.12 and Git with winget if they are missing, refreshes PATH in this window, ignores the Microsoft Store `python` alias, clones into `%USERPROFILE%\club-autopilot`, checks out `launchpad`, creates `.venv`, installs dependencies, installs Playwright Chromium, starts the site on port 5050, and opens http://127.0.0.1:5050/onboarding .
+
+Leave the server window open. Closing it stops the site.
+
+Next time, from any folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\club-autopilot\start.ps1"
+```
+
+If Windows asks for an install confirmation (UAC), click Yes. Then fill the onboarding wizard in the browser. The script does not type the club profile for you.
+
+### Troubleshooting
+
+- **`python` prints nothing.** That is the Microsoft Store alias, not Python. Do not use it. The one-liner skips `WindowsApps\python.exe` and uses the real Python 3.12 install. You do not need to close and reopen the terminal; the script reloads Machine and User PATH itself.
+- **`pip` is not recognized.** The command is `python -m pip`. The script already does that inside `.venv`.
+- **The prompt shows `>>`.** A multi-line paste was merged. Press Ctrl+C and paste the one-liner again as a single line. Do not type `lauchpad` or `club-sutopilot` by hand.
+- **The window started in `C:\WINDOWS\System32`.** Do not clone there. The script changes to your home directory and clones `%USERPROFILE%\club-autopilot`.
+- **Execution policy blocks a downloaded `.ps1`.** Use the one-liner above. It already passes `-ExecutionPolicy Bypass`.
+- **`winget` is not found.** Install "App Installer" from the Microsoft Store, then paste the same line again.
+- **Port 5050 never opens.** Another program is using it, or the server window shows an error. Close that program, close the server window, and paste the line again.
+- **The page is already open and you want a code update.** Close the server window first, then paste the one-liner again. While the server is running, the script only opens the browser.
+
+### Manual install (fallback)
 
 ```bash
-git clone https://github.com/cmy-hulala/club-autopilot.git
+cd "$HOME"                      # Windows PowerShell: cd $env:USERPROFILE
+git clone --branch launchpad https://github.com/cmy-hulala/club-autopilot.git
 cd club-autopilot
-git checkout launchpad
 
 python -m venv .venv
 . .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-pytest -q                       # 135 tests, including onboarding and the module catalog
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+python -m autopilot web --port 5050
 ```
 
-Playwright's browser download is only needed later, for a real Linktree sync or a real form banner. The judge path below does not open a browser.
+On Windows, `python` must be the real install, not the Store alias. If `python` does nothing, use the full path `%LOCALAPPDATA%\Programs\Python\Python312\python.exe`.
+
+Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 138 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
 
 ### Run the dashboard
 
@@ -206,10 +240,10 @@ Then go back to http://127.0.0.1:5050 . **在儀表板打開範例活動** opens
 ## Tests
 
 ```bash
-pytest -q        # 135 tests
+pytest -q        # 138 tests
 ```
 
-Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, and the module catalog.
+Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, the module catalog, and the Windows `setup.ps1` one-liner.
 
 ## Honest disclosures
 
