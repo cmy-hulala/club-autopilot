@@ -249,6 +249,15 @@ if ($PSScriptRoot) {
         }
     }
 
+    function Get-PrivateDir {
+        if ($env:AUTOPILOT_PRIVATE_DIR) { return $env:AUTOPILOT_PRIVATE_DIR }
+        $homeDir = $HOME
+        if (-not $homeDir) { $homeDir = $env:USERPROFILE }
+        $legacy = Join-Path $homeDir '創創社-私密'
+        if (Test-Path -LiteralPath $legacy -PathType Container) { return $legacy }
+        return (Join-Path $homeDir 'ClubAutopilot-private')
+    }
+
     Say "Club Autopilot 安裝程式 / Club Autopilot setup (launchpad)"
     $alias = Get-Command python -ErrorAction SilentlyContinue
     if ($alias -and (Test-StoreAlias $alias.Source)) {
@@ -258,6 +267,9 @@ if ($PSScriptRoot) {
         Set-Location -LiteralPath $HOME
         Say "這個視窗開在 Windows 系統資料夾，已改到使用者家目錄，避免把專案載到 System32。 / This window was opened in a Windows system folder. Moved to your home directory so the project is not cloned into System32."
     }
+
+    $privateDir = Get-PrivateDir
+    Say "本機私密設定會放在 $privateDir 。新電腦用 ClubAutopilot-private；如果已經有「創創社-私密」資料夾就繼續用它。環境變數 AUTOPILOT_PRIVATE_DIR 優先。 / Private settings go in $privateDir . A new computer uses ClubAutopilot-private. An existing legacy folder is kept. AUTOPILOT_PRIVATE_DIR wins."
 
     Update-SessionPath
     $existing = Find-ExistingRepo

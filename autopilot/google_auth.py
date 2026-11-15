@@ -1,7 +1,8 @@
 """Google OAuth (refactored from the pre-hackathon _tools/google_oauth.py).
 
-Tokens never live in this repo. Pass --oauth-dir (default: %USERPROFILE%\\創創社-私密\\google-oauth).
-The default --google path refuses to run unless the authorised account is the club inbox, so drafts land in the club's Drafts folder.
+Tokens never live in this repo. Pass --oauth-dir (default: <private folder>\\google-oauth).
+The default --google path refuses to run unless the authorised account is the club inbox
+saved in local settings (club_email) or CLUB_GOOGLE_ACCOUNT. There is no built-in inbox.
 --forms-only uses a separate token file and refuses unless it is the requested personal account.
 """
 from __future__ import annotations
@@ -18,11 +19,28 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "openid",
 ]
-CLUB_ACCOUNT = os.environ.get("CLUB_GOOGLE_ACCOUNT", "nycu.iec@gmail.com")
+def club_account() -> str:
+    """Club Gmail from the environment or the saved local profile. Empty for a new install."""
+    from .local_settings import club_email
+    return club_email()
+
+
+def require_club_account() -> str:
+    email = club_account()
+    if "@" not in email:
+        sys.exit(
+            "尚未設定社團信箱。請在本機私密設定的 club_email 填上社團 Gmail，"
+            "或設定環境變數 CLUB_GOOGLE_ACCOUNT。"
+        )
+    return email
 
 
 def default_oauth_dir() -> Path:
-    return Path(os.environ.get("CLUB_OAUTH_DIR") or Path.home() / "創創社-私密" / "google-oauth")
+    env = (os.environ.get("CLUB_OAUTH_DIR") or "").strip()
+    if env:
+        return Path(env)
+    from .local_settings import private_dir
+    return private_dir() / "google-oauth"
 
 
 def get_credentials(oauth_dir: Path, interactive: bool = True):
@@ -47,19 +65,20 @@ def get_credentials(oauth_dir: Path, interactive: bool = True):
     if not creds or not creds.valid:
         if not interactive:
             # Dashboard / background runs: never pop a browser login window.
-            sys.exit("社團 Gmail 授權已過期：請在 CMY 執行 run_real_google.cmd，用 nycu.iec@gmail.com 重新授權一次，再按重跑。")
+            sys.exit("社團 Gmail 授權已過期：請執行 run_real_google.cmd，用本機設定裡的社團信箱重新授權一次，再按重跑。")
         if not secret.is_file():
             sys.exit(f"找不到 {secret}。請先照私密資料夾的 README 建好 OAuth 用戶端。")
-        print(f"瀏覽器會打開 Google 授權，請選 {CLUB_ACCOUNT}。")
+        account = require_club_account()
+        print(f"瀏覽器會打開 Google 授權，請選 {account}。")
         flow = InstalledAppFlow.from_client_secrets_file(str(secret), SCOPES)
-        creds = flow.run_local_server(port=0, prompt="select_account consent", login_hint=CLUB_ACCOUNT)
+        creds = flow.run_local_server(port=0, prompt="select_account consent", login_hint=account)
         token.write_text(creds.to_json(), encoding="utf-8")
     return creds
 
 
 def authorize(oauth_dir: Path, timeout_s: int = 600, force: bool = False) -> str:
-    """Only the consent step for the club account: open Google sign-in, wait up to `timeout_s` for the
-    redirect, check the account is CLUB_ACCOUNT, then save token.json. Creates nothing else."""
+    """Only the consent step for the saved club inbox: open Google sign-in, wait up to `timeout_s` for the
+    redirect, check the account, then save token.json. Creates nothing else."""
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
@@ -69,6 +88,7 @@ def authorize(oauth_dir: Path, timeout_s: int = 600, force: bool = False) -> str
     repo = Path(__file__).resolve().parent.parent
     if repo in oauth_dir.resolve().parents or oauth_dir.resolve() == repo:
         sys.exit("OAuth 資料夾不能放在 repo 裡。")
+    expected = require_club_account()
     token, secret = oauth_dir / "token.json", oauth_dir / "credentials.json"
     if not force and token.is_file():
         try:
@@ -77,7 +97,7 @@ def authorize(oauth_dir: Path, timeout_s: int = 600, force: bool = False) -> str
                 creds.refresh(Request())
             if creds.valid and set(SCOPES) <= set(creds.scopes or []):
                 email = build("gmail", "v1", credentials=creds, cache_discovery=False).users().getProfile(userId="me").execute().get("emailAddress", "")
-                if email.lower() == CLUB_ACCOUNT.lower():
+                if email.lower() == expected.lower():
                     token.write_text(creds.to_json(), encoding="utf-8")
                     return email
         except Exception:
@@ -85,9 +105,9 @@ def authorize(oauth_dir: Path, timeout_s: int = 600, force: bool = False) -> str
     if not secret.is_file():
         sys.exit(f"找不到 {secret}。請先照私密資料夾的 README 建好 OAuth 用戶端。")
     flow = InstalledAppFlow.from_client_secrets_file(str(secret), SCOPES)
-    print(f"瀏覽器會打開 Google 授權頁，請用 {CLUB_ACCOUNT} 登入並按「允許」（最多等 {timeout_s // 60} 分鐘）。")
+    print(f"瀏覽器會打開 Google 授權頁，請用 {expected} 登入並按「允許」（最多等 {timeout_s // 60} 分鐘）。")
     try:
-        creds = flow.run_local_server(port=0, prompt="select_account consent", login_hint=CLUB_ACCOUNT,
+        creds = flow.run_local_server(port=0, prompt="select_account consent", login_hint=expected,
                                       timeout_seconds=timeout_s,
                                       success_message="授權完成，可以關掉這個分頁回到終端機。")
     except Exception as e:  # timeout leaves no redirect -> the library raises
@@ -95,8 +115,8 @@ def authorize(oauth_dir: Path, timeout_s: int = 600, force: bool = False) -> str
     if not creds or not creds.valid:
         sys.exit("沒有在時間內完成授權，token 沒有變更。請再執行一次。")
     email = build("gmail", "v1", credentials=creds, cache_discovery=False).users().getProfile(userId="me").execute().get("emailAddress", "")
-    if email.lower() != CLUB_ACCOUNT.lower():
-        sys.exit(f"授權的是 {email}，不是 {CLUB_ACCOUNT}，token 沒有儲存。請重跑並選 {CLUB_ACCOUNT}。")
+    if email.lower() != expected.lower():
+        sys.exit(f"授權的是 {email}，不是 {expected}，token 沒有儲存。請重跑並選 {expected}。")
     oauth_dir.mkdir(parents=True, exist_ok=True)
     token.write_text(creds.to_json(), encoding="utf-8")
     return email
@@ -108,8 +128,9 @@ def services(oauth_dir: Path, interactive: bool = True):
     creds = get_credentials(oauth_dir, interactive=interactive)
     gmail = build("gmail", "v1", credentials=creds, cache_discovery=False)
     email = gmail.users().getProfile(userId="me").execute().get("emailAddress", "")
-    if email.lower() != CLUB_ACCOUNT.lower():
-        sys.exit(f"目前授權的是 {email}，不是 {CLUB_ACCOUNT}。為了讓草稿進社團草稿匣，已停止。")
+    expected = require_club_account()
+    if email.lower() != expected.lower():
+        sys.exit(f"目前授權的是 {email}，不是 {expected}。為了讓草稿進社團草稿匣，已停止。")
     forms = build("forms", "v1", credentials=creds, cache_discovery=False)
     drive = build("drive", "v3", credentials=creds, cache_discovery=False)
     return {"gmail": gmail, "forms": forms, "drive": drive, "account": email}

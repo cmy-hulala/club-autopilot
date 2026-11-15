@@ -131,6 +131,17 @@ if ($PSScriptRoot) {
         }
     }
 
+    function Get-PrivateDir {
+        if ($env:AUTOPILOT_PRIVATE_DIR) { return $env:AUTOPILOT_PRIVATE_DIR }
+        $homeDir = $HOME
+        if (-not $homeDir) { $homeDir = $env:USERPROFILE }
+        $legacy = Join-Path $homeDir '創創社-私密'
+        if (Test-Path -LiteralPath $legacy -PathType Container) { return $legacy }
+        return (Join-Path $homeDir 'ClubAutopilot-private')
+    }
+
+    $privateDir = Get-PrivateDir
+    Say "本機私密設定資料夾：$privateDir 。新安裝是 ClubAutopilot-private；已有「創創社-私密」就沿用。AUTOPILOT_PRIVATE_DIR 優先。 / Private settings folder: $privateDir . New installs use ClubAutopilot-private. An existing legacy folder is kept. AUTOPILOT_PRIVATE_DIR wins."
     Say "正在打開 Club Autopilot … / Opening Club Autopilot…"
     $repo = Find-Repo
     if ($repo) { Update-Launchpad $repo }

@@ -59,10 +59,11 @@ def club_defaults() -> dict:
 
 
 def private_dir() -> Path:
-    env = os.environ.get("CLUB_PRIVATE_DIR")
+    env = (os.environ.get("CLUB_PRIVATE_DIR") or "").strip()
     if env:
         return Path(env)
-    return Path.home() / "創創社-私密"
+    from .local_settings import private_dir as shared_private_dir
+    return shared_private_dir()
 
 
 def load_token() -> str | None:

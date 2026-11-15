@@ -210,6 +210,8 @@ PHRASES: dict[str, str] = {
     "報名人數來自課前表單回覆。": "Registrations come from the pre-lecture form responses. ",
     "人數只顯示合計，不會列出 Email。": "Only totals are shown; no emails are listed.",
     "社團 Gmail 授權已過期：請在 CMY 執行 run_real_google.cmd，用 nycu.iec@gmail.com 重新授權一次，再按重跑。": "Club Gmail authorization expired: run run_real_google.cmd on CMY, re-authorize nycu.iec@gmail.com once, then retry.",
+    "社團 Gmail 授權已過期：請執行 run_real_google.cmd，用本機設定裡的社團信箱重新授權一次，再按重跑。": "Club Gmail authorization expired: run run_real_google.cmd and sign in again with the club inbox from local settings, then retry.",
+    "尚未設定社團信箱。請在本機私密設定的 club_email 填上社團 Gmail，或設定環境變數 CLUB_GOOGLE_ACCOUNT。": "No club inbox is set. Put the club Gmail in club_email in the local private settings, or set CLUB_GOOGLE_ACCOUNT.",
     "token 無效或已過期，請先在本機重新授權。": "Token invalid or expired; re-authorize on this computer first.",
     "找不到 token 檔：": "Token file not found: ",
     # publish card

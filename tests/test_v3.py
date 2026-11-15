@@ -233,8 +233,8 @@ def test_dashboard_gmail_auth_never_opens_browser(tmp_path):
 
 
 def test_auth_only_saves_token_for_club_account(tmp_path, monkeypatch):
-    import types
     from autopilot import google_auth
+    monkeypatch.setenv("CLUB_GOOGLE_ACCOUNT", "nycu.iec@gmail.com")
     (tmp_path / "credentials.json").write_text("{}", encoding="utf-8")
     calls = {}
 

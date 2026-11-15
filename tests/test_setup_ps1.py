@@ -39,6 +39,8 @@ def test_setup_ps1_is_a_powershell_51_installer():
     assert "pull --ff-only origin $Branch" in text
     assert "platform-tools-latest-windows.zip" in text
     assert "club-autopilot-tools" in text
+    assert "ClubAutopilot-private" in text
+    assert "AUTOPILOT_PRIVATE_DIR" in text
 
 
 def test_start_ps1_relaunches_onboarding():
@@ -53,6 +55,8 @@ def test_start_ps1_relaunches_onboarding():
     assert "??" not in text
     assert "pull --ff-only origin $Branch" in text
     assert "$Branch = 'launchpad'" in text
+    assert "ClubAutopilot-private" in text
+    assert "AUTOPILOT_PRIVATE_DIR" in text
 
 
 def test_readme_leads_with_the_windows_one_liner():

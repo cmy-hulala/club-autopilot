@@ -118,10 +118,8 @@ def output_allowed(path: Path, root: Path | None = None) -> bool:
 
 
 def private_dir() -> Path:
-    env = os.environ.get("AUTOPILOT_PRIVATE_DIR")
-    if env:
-        return assert_outside_repo(env)
-    return assert_outside_repo(Path.home() / "創創社-私密")
+    from .local_settings import private_dir as resolve_private_dir
+    return assert_outside_repo(resolve_private_dir())
 
 
 def config_destination() -> Path:
@@ -468,7 +466,7 @@ def build_config(progress: dict, modules: dict) -> dict:
 def blank_template_yaml() -> str:
     return """# Club Autopilot local config template.
 # Save this OUTSIDE the git repository. Suggested path:
-#   %USERPROFILE%\\創創社-私密\\autopilot_local.yaml
+#   %USERPROFILE%\\ClubAutopilot-private\\autopilot_local.yaml
 #   (or set AUTOPILOT_ONBOARDING_CONFIG / AUTOPILOT_LOCAL_CONFIG to that file)
 # Do not commit this file. Do not put channel tokens, OAuth tokens, or member lists in the repo.
 club_name: Your Club Name
@@ -1044,7 +1042,6 @@ def _token_candidates() -> list[Path]:
     folders = []
     if os.environ.get("CLUB_OAUTH_DIR"):
         folders.append(Path(os.environ["CLUB_OAUTH_DIR"]))
-    folders.append(Path.home() / "創創社-私密" / "google-oauth")
     try:
         folders.append(private_dir() / "google-oauth")
     except UnsafeConfigPath:

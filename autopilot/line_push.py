@@ -3,7 +3,7 @@
 Only ever called from the dashboard button after the officer confirms the exact text. It is never
 part of 全部執行 / run_pipeline. Credentials come from env vars or a private file outside the repo:
 
-  token:  env LINE_CHANNEL_ACCESS_TOKEN, or %USERPROFILE%\\創創社-私密\\line\\line_bot.json
+  token:  env LINE_CHANNEL_ACCESS_TOKEN, or <private folder>\\line\\line_bot.json
           {"channel_access_token": "...", "group_ids": ["C..", "C.."]}  (older "group_id" also accepted;
           path overridable with LINE_BOT_CONFIG)
   groups: env LINE_GROUP_IDS (comma), else the private file, else line_groups in the local settings file
@@ -29,12 +29,8 @@ def config_path() -> Path:
     env = os.environ.get("LINE_BOT_CONFIG")
     if env:
         return Path(env)
-    private = os.environ.get("AUTOPILOT_PRIVATE_DIR")
-    if private:
-        candidate = Path(private) / "line" / "line_bot.json"
-        if candidate.is_file():
-            return candidate
-    return Path.home() / "創創社-私密" / "line" / "line_bot.json"
+    from .local_settings import private_dir
+    return private_dir() / "line" / "line_bot.json"
 
 
 GROUPS_FILE = Path(__file__).resolve().parent.parent / "config" / "line_groups.yaml"

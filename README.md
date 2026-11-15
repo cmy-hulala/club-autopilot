@@ -80,15 +80,16 @@ python -m autopilot run tests/fixtures/2026-11-25-candice.yaml   # preview only,
 pytest -q
 ```
 
-Private settings live **outside the repo**, in `%USERPROFILE%\創創社-私密\` (or wherever environment variables point):
+Private settings live **outside the repo**. A new install uses `%USERPROFILE%\ClubAutopilot-private\` (or `~/ClubAutopilot-private/`). If `%USERPROFILE%\創創社-私密\` already exists, that folder is kept. `AUTOPILOT_PRIVATE_DIR` overrides both.
 
 | What | Where |
 |---|---|
 | Personal Google account that owns the Forms | env `AUTOPILOT_FORMS_ACCOUNT`, or `forms_account:` in `autopilot_local.yaml` |
+| Club Gmail inbox | env `CLUB_GOOGLE_ACCOUNT`, or `club_email:` in `autopilot_local.yaml`. There is no built-in inbox. |
 | Notion page id / token | env `NOTION_PAGE_ID`, `NOTION_TOKEN`, or `autopilot_local.yaml` |
-| Google OAuth tokens | `創創社-私密\google-oauth\` (the code refuses an OAuth folder inside the repo) |
-| LINE channel token and group IDs | env `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_GROUP_IDS`, or `創創社-私密\line\line_bot.json` |
-| BCC exclusion list | env `CLUB_BCC_EXCLUDE_FILE`, or `創創社-私密\密件副本\bcc_exclude.txt` |
+| Google OAuth tokens | `<private folder>\google-oauth\` (the code refuses an OAuth folder inside the repo) |
+| LINE channel token and group IDs | env `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_GROUP_IDS`, or `<private folder>\line\line_bot.json` |
+| BCC exclusion list | env `CLUB_BCC_EXCLUDE_FILE`, or `<private folder>\密件副本\bcc_exclude.txt` |
 
 See `autopilot/local_settings.py` for the format. Without these settings, the preview, the copy and the tests all still work.
 
@@ -149,7 +150,7 @@ python -m autopilot web --port 5050
 
 On Windows, `python` must be the real install, not the Store alias. If `python` does nothing, use the full path `%LOCALAPPDATA%\Programs\Python\Python312\python.exe`.
 
-Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 148 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
+Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 150 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
 
 ### Run the dashboard
 
@@ -181,8 +182,10 @@ The club file is written **outside the git repo**:
 
 | System | Default file |
 |---|---|
-| Windows | `%USERPROFILE%\創創社-私密\autopilot_local.yaml` |
-| macOS / Linux | `~/創創社-私密/autopilot_local.yaml` |
+| Windows | `%USERPROFILE%\ClubAutopilot-private\autopilot_local.yaml` |
+| macOS / Linux | `~/ClubAutopilot-private/autopilot_local.yaml` |
+
+If `%USERPROFILE%\創創社-私密` (or `~/創創社-私密`) is already a folder, the file is written there instead.
 
 To put that folder somewhere else (useful on a judge laptop):
 
@@ -227,7 +230,7 @@ Then go back to http://127.0.0.1:5050 . **在儀表板打開範例活動** opens
 - Linktree's test does not log in. Instagram's test runs `adb devices` at most, and never taps the phone.
 - Module on/off is stored for the club. It does not change the existing pipeline, on purpose.
 - The sample lecture is the included 2026-11-25 demo event, not a new club's real calendar.
-- The private folder on Windows uses the name `創創社-私密`, same as the rest of this project. Set `AUTOPILOT_PRIVATE_DIR` if you want a different folder.
+- A new private folder is named `ClubAutopilot-private`. An existing `創創社-私密` folder is left in place and still used. Set `AUTOPILOT_PRIVATE_DIR` to choose another folder. The club Gmail address comes from `club_email` in that file, not from a built-in address.
 
 ## Safety design
 
@@ -244,7 +247,7 @@ Then go back to http://127.0.0.1:5050 . **在儀表板打開範例活動** opens
 ## Tests
 
 ```bash
-pytest -q        # 148 tests
+pytest -q        # 150 tests
 ```
 
 Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, the module catalog, and the Windows `setup.ps1` one-liner.

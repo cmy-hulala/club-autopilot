@@ -1,7 +1,7 @@
 """Create or update the three Gmail drafts in the club mailbox. Never sends.
 
 BCC sources (HTML信件規範.md: 收件人＝社團信箱自己，名單放密件副本):
-- 預告信: the members list file in %USERPROFILE%\\創創社-私密\\密件副本\\ (newest *預告信*.txt).
+- 預告信: the members list file in the private folder's 密件副本\\ (newest *預告信*.txt).
 - 提醒信: 課前表單 respondents who did not answer 「無法參加」.
 - 課後信: the same 課前表單 attendees (the spec has no separate list; 課後表單 is only filled after class).
 If the form has 0 responses, those two drafts keep an empty BCC.

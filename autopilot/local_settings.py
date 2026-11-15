@@ -3,8 +3,12 @@
 Values come from, in order:
   1. environment variables (AUTOPILOT_FORMS_ACCOUNT, NOTION_PAGE_ID, LINE_GROUP_IDS, ...)
   2. a private YAML file: env AUTOPILOT_LOCAL_CONFIG, else
-     %USERPROFILE%\\創創社-私密\\autopilot_local.yaml, else config/local.yaml (git-ignored)
+     <private folder>\\autopilot_local.yaml, else config/local.yaml (git-ignored)
   3. a harmless placeholder
+
+The private folder is AUTOPILOT_PRIVATE_DIR when that is set. Otherwise an existing
+%USERPROFILE%\\創創社-私密 folder is kept. A new install uses
+%USERPROFILE%\\ClubAutopilot-private.
 
 Example autopilot_local.yaml:
   forms_account: officer@gmail.com          # personal account that owns the Google Forms
@@ -21,13 +25,30 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 PLACEHOLDER_ACCOUNT = "your-personal-account@gmail.com"
+LEGACY_PRIVATE_NAME = "創創社-私密"
+PRIVATE_NAME = "ClubAutopilot-private"
+
+
+def private_dir() -> Path:
+    """Folder for secrets. Env wins, then an existing legacy folder, then the neutral name.
+
+    The folder does not have to exist yet. Callers create it when they write.
+    """
+    env = (os.environ.get("AUTOPILOT_PRIVATE_DIR") or "").strip()
+    if env:
+        return Path(env).expanduser()
+    home = Path.home()
+    legacy = home / LEGACY_PRIVATE_NAME
+    if legacy.is_dir():
+        return legacy
+    return home / PRIVATE_NAME
 
 
 def config_path() -> Path | None:
     env = os.environ.get("AUTOPILOT_LOCAL_CONFIG")
     if env:
         return Path(env)
-    for p in (Path.home() / "創創社-私密" / "autopilot_local.yaml", ROOT / "config" / "local.yaml"):
+    for p in (private_dir() / "autopilot_local.yaml", ROOT / "config" / "local.yaml"):
         if p.is_file():
             return p
     return None
@@ -61,6 +82,11 @@ def forms_account_local() -> str:
 
 def notion_page_id() -> str:
     return str(get("notion_page_id", "NOTION_PAGE_ID", "") or "").strip()
+
+
+def club_email() -> str:
+    """Club inbox from CLUB_GOOGLE_ACCOUNT or club_email in the local file. Empty when unset."""
+    return str(get("club_email", "CLUB_GOOGLE_ACCOUNT", "") or "").strip()
 
 
 def line_groups() -> list[dict]:

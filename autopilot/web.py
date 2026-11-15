@@ -98,7 +98,8 @@ def default_forms_token() -> Path:
     env = os.environ.get("CLUB_FORMS_TOKEN")
     if env:
         return Path(env)
-    return Path.home() / "創創社-私密" / "google-oauth" / f"token-{forms_account_local()}.json"
+    from .local_settings import private_dir
+    return private_dir() / "google-oauth" / f"token-{forms_account_local()}.json"
 
 
 def default_members_bcc_file() -> Path | None:
@@ -106,7 +107,8 @@ def default_members_bcc_file() -> Path | None:
     if env:
         p = Path(env)
         return p if p.is_file() else None
-    folder = Path.home() / "創創社-私密" / "密件副本"
+    from .local_settings import private_dir
+    folder = private_dir() / "密件副本"
     if not folder.is_dir():
         return None
     # Prefer the newest 預告信 list (used for the announcement draft).
@@ -2029,8 +2031,8 @@ def _form_links(state: dict) -> list[dict]:
 
 
 def _draft_links(state: dict) -> list[dict]:
-    from .local_settings import get as _setting
-    inbox = str(_setting("club_email", "CLUB_GOOGLE_ACCOUNT", "") or "").strip()
+    from .local_settings import club_email
+    inbox = club_email()
     href = "https://mail.google.com/mail/u/#drafts"
     if "@" in inbox:
         href = f"https://mail.google.com/mail/u/?authuser={inbox}#drafts"

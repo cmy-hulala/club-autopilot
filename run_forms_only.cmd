@@ -9,7 +9,8 @@ if not exist .venv\Scripts\python.exe (
   .venv\Scripts\python -m pip install -q -r requirements.txt
 )
 set EVENT=events\2026-11-25-candice.yaml
-REM 帳號來自環境變數 AUTOPILOT_FORMS_ACCOUNT 或 %USERPROFILE%\創創社-私密\autopilot_local.yaml（不放 repo）。
+REM 帳號來自環境變數 AUTOPILOT_FORMS_ACCOUNT 或私密資料夾的 autopilot_local.yaml（不放 repo）。
+REM 新安裝的私密資料夾是 %%USERPROFILE%%\ClubAutopilot-private；已有「創創社-私密」就沿用。
 for /f "usebackq delims=" %%t in (`.venv\Scripts\python -c "from autopilot.web import default_forms_token; print(default_forms_token())"`) do set TOKEN=%%t
 if not exist "%TOKEN%" (
   echo 找不到個人帳號 token：%TOKEN%

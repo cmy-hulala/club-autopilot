@@ -1,6 +1,6 @@
 """Private BCC exclude list: addresses that must never be in any BCC (預告信／提醒信／課後信).
 
-The file lives outside the repo (repo is public): %USERPROFILE%\\創創社-私密\\密件副本\\bcc_exclude.txt,
+The file lives outside the repo (repo is public): <private folder>\\密件副本\\bcc_exclude.txt,
 or CLUB_BCC_EXCLUDE_FILE. One entry per line, '#' starts a comment:
   someone@example.com   -> that exact address
   someone               -> any address whose local part is 'someone' (any domain)
@@ -15,7 +15,8 @@ def default_path() -> Path:
     env = os.environ.get("CLUB_BCC_EXCLUDE_FILE")
     if env:
         return Path(env)
-    return Path.home() / "創創社-私密" / "密件副本" / "bcc_exclude.txt"
+    from .local_settings import private_dir
+    return private_dir() / "密件副本" / "bcc_exclude.txt"
 
 
 def load(path: str | Path | None = None) -> tuple[set[str], set[str]]:

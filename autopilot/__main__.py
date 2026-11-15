@@ -20,7 +20,7 @@ def main(argv=None) -> int:
     r.add_argument("--forms-token", help="--forms-only 用的 token 檔路徑（不放 repo、不印出內容）")
     r.add_argument("--forms-account", default=forms_account(),
                    help="--forms-only 必須為此帳號，否則停止（預設 AUTOPILOT_FORMS_ACCOUNT／本機設定）")
-    r.add_argument("--oauth-dir", help="OAuth 資料夾（預設 %%USERPROFILE%%\\創創社-私密\\google-oauth）")
+    r.add_argument("--oauth-dir", help="OAuth 資料夾（預設為私密資料夾裡的 google-oauth）")
     r.add_argument("--members-bcc-file", help="社員密件副本清單（私密檔，不放 repo）")
     r.add_argument("--linktree", action="store_true", help="用瀏覽器同步 Linktree（需要人登入）")
     r.add_argument("--banner", action="store_true",
@@ -41,7 +41,7 @@ def main(argv=None) -> int:
                     help="確認訊息，與 --form-id 對應；省略且未用 --event 時不改確認訊息")
     sb.add_argument("--image", help="Banner 圖片路徑（預設 assets/form_banner.jpg）")
     sb.add_argument("--account", default=forms_account(), help="必須為此帳號，否則會等你切換（預設 AUTOPILOT_FORMS_ACCOUNT／本機設定）")
-    sb.add_argument("--profile", help="Chrome 設定檔資料夾（預設 %%USERPROFILE%%\\創創社-私密\\chrome-form-banner）")
+    sb.add_argument("--profile", help="Chrome 設定檔資料夾（預設為私密資料夾裡的 chrome-form-banner）")
     sb.add_argument("--shots", help="截圖資料夾")
     sb.add_argument("--login-wait", type=int, default=600, help="等待登入的秒數（預設 600）")
     sb.add_argument("--confirmation-only", action="store_true", help="只寫確認訊息，不改已上的 Banner")
@@ -49,8 +49,8 @@ def main(argv=None) -> int:
     sd.add_argument("--event", required=True)
     sd.add_argument("--dry-run", action="store_true", help="只比對、不改草稿")
     sd.add_argument("--out", help="輸出根目錄（預設 out/）")
-    au = sub.add_parser("auth", help="只做社團帳號 nycu.iec 的 Google 授權（存 token.json），不建表單、不建草稿")
-    au.add_argument("--oauth-dir", help="OAuth 資料夾（預設 %%USERPROFILE%%\\創創社-私密\\google-oauth）")
+    au = sub.add_parser("auth", help="只做本機設定裡社團信箱的 Google 授權（存 token.json），不建表單、不建草稿")
+    au.add_argument("--oauth-dir", help="OAuth 資料夾（預設為私密資料夾裡的 google-oauth）")
     au.add_argument("--timeout", type=int, default=600, help="等瀏覽器授權的秒數（預設 600）")
     au.add_argument("--force", action="store_true", help="即使 token 還有效也重新授權")
     a = ap.parse_args(argv)

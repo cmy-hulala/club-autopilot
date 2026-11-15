@@ -140,6 +140,42 @@ def test_strings_translate_and_do_not_clobber_existing_copy():
             assert i18n.PHRASES[zh] == EN[key]
 
 
+def test_private_dir_is_neutral_unless_the_legacy_folder_exists(tmp_path, monkeypatch):
+    from autopilot import local_settings
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setattr(local_settings.Path, "home", lambda: home)
+    monkeypatch.delenv("AUTOPILOT_PRIVATE_DIR", raising=False)
+    monkeypatch.delenv("AUTOPILOT_ONBOARDING_CONFIG", raising=False)
+    assert local_settings.private_dir() == home / "ClubAutopilot-private"
+    assert "創創社" not in local_settings.private_dir().name
+    legacy = home / "創創社-私密"
+    legacy.mkdir()
+    assert local_settings.private_dir() == legacy
+    chosen = tmp_path / "picked"
+    monkeypatch.setenv("AUTOPILOT_PRIVATE_DIR", str(chosen))
+    assert local_settings.private_dir() == chosen
+    assert launchpad.private_dir() == chosen.resolve()
+
+
+def test_club_gmail_comes_from_saved_settings(tmp_path, monkeypatch):
+    from autopilot import google_auth
+    monkeypatch.delenv("CLUB_GOOGLE_ACCOUNT", raising=False)
+    cfg = tmp_path / "local.yaml"
+    cfg.write_text("forms_account: officer@example.com\n", encoding="utf-8")
+    monkeypatch.setenv("AUTOPILOT_LOCAL_CONFIG", str(cfg))
+    assert google_auth.club_account() == ""
+    with pytest.raises(SystemExit) as missing:
+        google_auth.require_club_account()
+    assert "nycu.iec" not in str(missing.value)
+    cfg.write_text("club_email: club@example.com\n", encoding="utf-8")
+    assert google_auth.club_account() == "club@example.com"
+    monkeypatch.setenv("CLUB_GOOGLE_ACCOUNT", "other@example.com")
+    assert google_auth.club_account() == "other@example.com"
+    source = (ROOT / "autopilot" / "google_auth.py").read_text(encoding="utf-8")
+    assert "nycu.iec@gmail.com" not in source
+
+
 def test_config_destination_never_points_inside_the_repo(tmp_path, monkeypatch):
     monkeypatch.setenv("AUTOPILOT_PRIVATE_DIR", str(tmp_path / "priv"))
     monkeypatch.delenv("AUTOPILOT_ONBOARDING_CONFIG", raising=False)

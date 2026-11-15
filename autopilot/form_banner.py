@@ -30,9 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent
 from .local_settings import forms_account as _forms_account
 
 DEFAULT_ACCOUNT = _forms_account().lower()
-FORBIDDEN_ACCOUNTS = frozenset({"nycu.iec@gmail.com"})
 DESKTOP_BANNER = Path.home() / "OneDrive" / "Desktop" / "創創社" / "模板" / "表單Banner-nycuiec.jpg"
-DEFAULT_PROFILE = Path.home() / "創創社-私密" / "chrome-form-banner"
 CHROME_CANDIDATES = (
     Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
     Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
@@ -73,11 +71,29 @@ def default_banner() -> Path:
     return DESKTOP_BANNER
 
 
+def forbidden_accounts(*extra: str) -> set[str]:
+    """Inboxes that must not edit a form. Comes from saved settings and the event file, not a fixed address."""
+    found: set[str] = set()
+    try:
+        from .local_settings import club_email
+        saved = club_email().strip().lower()
+    except Exception:
+        saved = ""
+    if "@" in saved:
+        found.add(saved)
+    for item in extra:
+        text = str(item or "").strip().lower()
+        if "@" in text:
+            found.add(text)
+    return found
+
+
 def default_profile() -> Path:
     env = os.environ.get("CLUB_FORM_BANNER_PROFILE")
     if env:
         return Path(env)
-    return DEFAULT_PROFILE
+    from .local_settings import private_dir
+    return private_dir() / "chrome-form-banner"
 
 
 def confirmation_from_spec(text: str) -> str | None:
@@ -395,7 +411,7 @@ def _dump_labels(page, limit: int = 80) -> list[str]:
 
 
 def _ensure_account(page, required: str, login_wait_s: int, shots: Path) -> str:
-    forbidden = {a.lower() for a in FORBIDDEN_ACCOUNTS}
+    forbidden = forbidden_accounts()
     required_l = required.lower()
     deadline = time.time() + login_wait_s
     warned_login = False
@@ -404,7 +420,7 @@ def _ensure_account(page, required: str, login_wait_s: int, shots: Path) -> str:
         url = page.url or ""
         if "accounts.google.com" in url or "signin" in url.lower():
             if not warned_login:
-                print(f"請在打開的 Chrome 視窗用個人帳號 {required} 登入（不要用社團帳號 nycu.iec）。登入後程式會自動繼續，最多等 {login_wait_s // 60} 分鐘…")
+                print(f"請在打開的 Chrome 視窗用個人帳號 {required} 登入（不要用社團信箱）。登入後程式會自動繼續，最多等 {login_wait_s // 60} 分鐘…")
                 warned_login = True
             _shot(page, shots, "login-wait.png")
             page.wait_for_timeout(2000)
@@ -906,8 +922,9 @@ def apply_jobs(
     check_paths: dict[str, Path] | None = None,
     confirmation_only: bool = False,
     headless: bool = False,
+    also_forbidden: str = "",
 ) -> dict:
-    if required_account.lower() in FORBIDDEN_ACCOUNTS:
+    if required_account.lower() in forbidden_accounts(also_forbidden):
         raise SystemExit(f"表單 Banner 不能用社團帳號。請改用 {DEFAULT_ACCOUNT}。")
     image = Path(image or default_banner())
     assert_black_banner(image)
@@ -1034,6 +1051,13 @@ def apply_from_state(
     check_paths: dict[str, Path] | None = None,
     headless: bool = False,
 ) -> dict:
+    club_email = ""
+    try:
+        club = ev["club"] if ev is not None else {}
+        if isinstance(club, dict):
+            club_email = str(club.get("email") or "")
+    except Exception:
+        club_email = ""
     return apply_jobs(
         jobs_from_state(state, ev),
         image,
@@ -1043,6 +1067,7 @@ def apply_from_state(
         login_wait_s=login_wait_s,
         check_paths=check_paths,
         headless=headless,
+        also_forbidden=club_email,
     )
 
 
@@ -1076,6 +1101,15 @@ def main_cli(args) -> int:
             ))
 
     confirmation_only = bool(getattr(args, "confirmation_only", False))
+    event_email = ""
+    if getattr(args, "event", None):
+        try:
+            from .event import load_event
+            club = load_event(args.event)["club"]
+            if isinstance(club, dict):
+                event_email = str(club.get("email") or "")
+        except Exception:
+            event_email = ""
     summary = apply_jobs(
         jobs,
         image,
@@ -1084,6 +1118,7 @@ def main_cli(args) -> int:
         shots=shots,
         login_wait_s=login_wait,
         confirmation_only=confirmation_only,
+        also_forbidden=event_email,
     )
     failed = []
     for f in summary["forms"]:
