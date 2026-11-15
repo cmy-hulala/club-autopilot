@@ -1,0 +1,54 @@
+<script id="i18n-data" type="application/json">{{ i18n_json|safe }}</script>
+<script>
+(function(){
+  const root = document.documentElement;
+  const lang = root.dataset.lang === "en" ? "en" : "zh";
+  document.querySelectorAll("[data-setlang]").forEach(b => {
+    b.classList.toggle("on", b.dataset.setlang === lang);
+    b.addEventListener("click", () => {
+      try { localStorage.setItem("lang", b.dataset.setlang); } catch (e) {}
+      document.cookie = "lang=" + b.dataset.setlang + ";path=/;max-age=31536000";
+      location.reload();
+    });
+  });
+  if (lang !== "en") { root.classList.add("i18n-ready"); return; }
+  const D = JSON.parse(document.getElementById("i18n-data").textContent);
+  const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const keys = Object.keys(D.phrases).sort((a, b) => b.length - a.length);
+  const big = new RegExp(keys.map(reEsc).join("|"), "g");
+  const pun = new RegExp(Object.keys(D.punct).map(reEsc).join("|"), "g");
+  const pats = D.patterns.map(([p, r]) => [new RegExp(p, "g"), r]);
+  const has = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/;
+  function tr(text) {
+    if (!text || !has.test(text)) return text;
+    const lead = text.match(/^\s*/)[0], trail = text.match(/\s*$/)[0];
+    let t = text.trim();
+    for (const [rx, rep] of pats) t = t.replace(rx, rep);
+    t = t.replace(big, m => D.phrases[m]).replace(pun, m => D.punct[m]);
+    t = t.replace(/ {2,}/g, " ").replace(/ ([,.;:)])/g, "$1").replace(/\( /g, "(").trim();
+    return lead + t + trail;
+  }
+  window.T = tr;
+  const skip = el => !el || el.closest("[data-no-i18n],script,style,textarea");
+  function run(node) {
+    if (node.nodeType === 3) { if (!skip(node.parentElement)) { const v = tr(node.nodeValue); if (v !== node.nodeValue) node.nodeValue = v; } return; }
+    if (node.nodeType !== 1 || skip(node)) return;
+    for (const a of ["placeholder", "title", "alt", "aria-label", "data-confirm"]) {
+      if (node.hasAttribute && node.hasAttribute(a)) { const v = tr(node.getAttribute(a)); if (v !== node.getAttribute(a)) node.setAttribute(a, v); }
+    }
+    if (node.tagName === "INPUT" && (node.type === "submit" || node.type === "button")) node.value = tr(node.value);
+    node.childNodes.forEach(run);
+  }
+  run(document.body);
+  document.title = tr(document.title);
+  const oc = window.confirm.bind(window), oa = window.alert.bind(window);
+  window.confirm = m => oc(tr(String(m)));
+  window.alert = m => oa(tr(String(m)));
+  new MutationObserver(ms => ms.forEach(m => {
+    if (m.type === "characterData") run(m.target);
+    else if (m.type === "attributes") run(m.target);
+    else m.addedNodes.forEach(run);
+  })).observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "data-confirm"]});
+  root.classList.add("i18n-ready");
+})();
+</script>

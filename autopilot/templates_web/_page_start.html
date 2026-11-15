@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="{{ 'en' if lang == 'en' else 'zh-Hant' }}" data-lang="{{ lang or 'zh' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Autopilot · {{ title }}</title>
+<script>
+(function(){ try { var l = localStorage.getItem("lang"); if (l === "en" || l === "zh") { document.documentElement.dataset.lang = l;
+  document.cookie = "lang=" + l + ";path=/;max-age=31536000"; } } catch (e) {} })();
+</script>
+<style>
+html[data-lang="en"]:not(.i18n-ready) body{visibility:hidden}
+:root{
+  --bg:#f6f1e8; --card:#fff; --ink:#1a1a1a; --muted:#6b645a;
+  --line:#e6dfd2; --gold:#c98d17; --gold-soft:#e0b04a; --brown:#8a4f00;
+  --err:#b00020; --err-bg:#ffe5e5; --ok:#1b6b34; --ok-bg:#e3f6e8;
+  --warn:#7a5b00; --warn-bg:#fff3cd; --idle:#6b645a; --idle-bg:#f0ece4;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.5}
+a{color:var(--brown)}
+header.top{background:#111;color:#fff;padding:16px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+header.top img{height:44px;background:#fff;border-radius:8px;padding:3px}
+header.top b{color:var(--gold-soft);font-size:20px}
+.langsw{margin-left:auto;display:flex;gap:4px}
+.langsw button{background:transparent;color:#bbb;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
+.langsw button.on{background:var(--gold-soft);color:#111;border-color:var(--gold-soft);font-weight:700}
+.topnav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.topnav a{color:#fff;text-decoration:none;border:1px solid #444;border-radius:999px;padding:4px 10px;font-size:13px}
+.topnav a:hover{border-color:var(--gold-soft);color:var(--gold-soft)}
+main{max-width:980px;margin:0 auto;padding:22px 20px 80px}
+h1{margin:0 0 8px;font-size:24px;color:var(--brown)}
+h2{margin:0;font-size:18px;color:var(--brown)}
+.muted{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px}
+.card.focus{border-color:var(--gold)}
+.card.off{opacity:.72}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--gold);color:#fff;border:0;border-radius:8px;padding:10px 18px;
+  font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;font-family:inherit}
+.btn:hover{filter:brightness(1.05)}
+.btn.ghost{background:#fff;color:var(--brown);border:1px solid var(--gold)}
+.btn.dark{background:#111}
+.btn.sm{padding:6px 12px;font-size:13px}
+label.field{display:block;margin:0 0 12px}
+label.field span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:inherit;background:#fff}
+.banner{padding:10px 14px;border-radius:10px;margin:0 0 12px}
+.banner.ok{background:var(--ok-bg);color:var(--ok)}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.banner.err{background:var(--err-bg);color:var(--err)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.p-err{background:var(--err-bg);color:var(--err)}
+.p-idle{background:var(--idle-bg);color:var(--idle)}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}
+.steps form{margin:0}
+.steps button,.steps span{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font:inherit;color:var(--muted)}
+.steps button{cursor:pointer}
+.steps .on button{background:#111;color:#fff;border-color:#111}
+.steps .done button{border-color:var(--ok);color:var(--ok)}
+.swatch{height:10px;border-radius:999px;margin:4px 0 14px}
+code{font-size:13px}
+@media (max-width:720px){header.top{padding:12px 14px}.langsw{margin-left:0}}
+</style>
+</head>
+<body>
+{% include "_top.html" %}
+<main>

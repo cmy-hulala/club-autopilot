@@ -145,6 +145,11 @@ def test_every_step_listed_in_order(tmp_path):
 
 def test_run_all_success_no_duplicates_and_retry_only_on_failed(tmp_path, monkeypatch):
     live = Live(monkeypatch)
+    # Real ig_01–ig_04 live in gitignored Canva exports. This test only checks run-all order.
+    monkeypatch.setattr(
+        webmod, "ig_card_paths",
+        lambda root, ev, run_dir: [Path(f"ig_{i:02d}.png") for i in range(1, 5)],
+    )
     c = _app(tmp_path).test_client()
     c.post(f"/api/run-all/{SLUG}")
     d = _wait(c)

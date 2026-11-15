@@ -4,6 +4,8 @@
 
 Built solo for **STEMergent Hacks 2026** (Hackathon pathway, working prototype) for **陽明交大創創社 / NYCU Innovation & Entrepreneurship Club (NYCU IEC)**. It was demoed live on the club's real lecture of 2026-11-25 (Session 6, speaker 謝慈 Candice).
 
+**LaunchPad Hacks** judges: use the `launchpad` branch. Setup with fake data, the first-time wizard, and a dry-run are in [LaunchPad judges](#launchpad-judges). That branch is not merged into `main`.
+
 ▶ **Demo video (2:16):** https://youtu.be/mQXyeGE0Whc
 
 ---
@@ -90,6 +92,105 @@ Private settings live **outside the repo**, in `%USERPROFILE%\創創社-私密\`
 
 See `autopilot/local_settings.py` for the format. Without these settings, the preview, the copy and the tests all still work.
 
+## LaunchPad judges
+
+This section is for the **LaunchPad Hacks** submission on the `launchpad` branch. You do not need Google, LINE, Linktree, Instagram, or Canva credentials. The wizard and the module page use a **simulated connection test** when those credentials are missing, and the dry-run **does not send anything**.
+
+`main` is left unchanged. Check out `launchpad` and stay on it.
+
+### Install
+
+```bash
+git clone https://github.com/cmy-hulala/club-autopilot.git
+cd club-autopilot
+git checkout launchpad
+
+python -m venv .venv
+. .venv/bin/activate            # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+pytest -q                       # 135 tests, including onboarding and the module catalog
+```
+
+Playwright's browser download is only needed later, for a real Linktree sync or a real form banner. The judge path below does not open a browser.
+
+### Run the dashboard
+
+```bash
+python -m autopilot web --port 5050
+```
+
+Open http://127.0.0.1:5050 . The first screen links to **初次設定** (first-time setup). The same pages are:
+
+- http://127.0.0.1:5050/onboarding
+- http://127.0.0.1:5050/modules
+
+Use the 中文 / English toggle in the header. Generated lecture text stays Chinese.
+
+### Configure with fake data
+
+1. **Welcome.** Press **下一步**. Progress is saved on this computer, so a refresh continues at the same step.
+2. **Club profile.** Example: club name `North Campus Builders`, contact `Club Officer`, email `officer@example.com`, color `#1255aa`, tagline `We build on Thursdays`.
+3. **Google Forms and Gmail.** Leave the emails blank, or use `officer@example.com` and `club@example.com`. Press **測試連線**. With no OAuth file, the result is a yellow **模擬通過** (simulated pass). It does not call Google. Then press **下一步**.
+4. **LINE.** Leave the group blank. Do not paste a channel token into the form. **測試連線** is simulated and does not push. Then **下一步**.
+5. **Linktree.** Optional: `https://linktr.ee/north-campus`. The test only checks the URL. It does not open a browser.
+6. **Instagram / phone.** Leave the serial blank. With no `adb` device, the test is simulated and does not tap a phone.
+7. **Canva.** Optional note: `Thursday template`. The test only checks that the job-file module imports. This program stores no Canva password.
+8. **Import a sample event.** Press **匯入範例活動**. This copies the included demo lecture into the private folder (and into gitignored `out/_web/` so the dashboard can open it). It does not modify `events/` or the fixture file.
+9. **Preview dry-run.** Press **開始預覽演練**. This runs the pipeline in `preview` mode only. It writes local files. It does not create forms, Gmail drafts, LINE pushes, Linktree edits, or Instagram posts. The page says that nothing was sent.
+10. **Save.** Press **寫入本機設定**.
+
+The club file is written **outside the git repo**:
+
+| System | Default file |
+|---|---|
+| Windows | `%USERPROFILE%\創創社-私密\autopilot_local.yaml` |
+| macOS / Linux | `~/創創社-私密/autopilot_local.yaml` |
+
+To put that folder somewhere else (useful on a judge laptop):
+
+```bash
+# Windows PowerShell
+$env:AUTOPILOT_PRIVATE_DIR = "$env:USERPROFILE\autopilot-private"
+$env:AUTOPILOT_ONBOARDING_CONFIG = "$env:USERPROFILE\autopilot-private\autopilot_local.yaml"
+
+# macOS / Linux
+export AUTOPILOT_PRIVATE_DIR="$HOME/autopilot-private"
+export AUTOPILOT_ONBOARDING_CONFIG="$HOME/autopilot-private/autopilot_local.yaml"
+```
+
+If `AUTOPILOT_LOCAL_CONFIG` points at a file **inside** the repo, onboarding will not overwrite it. It writes to the private folder instead.
+
+**下載空白範本** downloads `autopilot_local.template.yaml` with fake placeholders only. Save that copy outside the repo if you want to edit it by hand. Do not commit it.
+
+Closing the browser and opening `/onboarding` again resumes the saved step. **重設進度** clears the wizard progress and does not delete a settings file already written.
+
+### Module catalog
+
+Open http://127.0.0.1:5050/modules .
+
+- Each card shows **已啟用** or **已停用**, and the last test badge (**未測試**, **模擬通過**, **已通過**, **測試失敗**).
+- **啟用 / 停用** saves immediately. Turning a module off does **not** remove the dashboard's existing manual buttons or change **全部執行**. Those stay as they were, so a saved toggle cannot silently skip a live step.
+- Each card has a settings form. A bad email or a group ID with a space stays on the card with a red error and does not save.
+- **測試連線** uses the same checks as the wizard. Success is green when a local credential is really present (the file is not printed and no API is called). A missing credential is a yellow simulated pass. A broken credential file or a phone serial that `adb` cannot see is red.
+- Reload the page. The toggle and the saved email are still there.
+
+Then go back to http://127.0.0.1:5050 . **在儀表板打開範例活動** opens the imported sample. **從 Notion 匯入** and **全部執行** behave as before. **全部執行** still only prepares files.
+
+### What the judge path never does
+
+- It does not email, push LINE, publish Instagram, log into Canva, or edit Linktree.
+- It does not write tokens, member lists, or `autopilot_local.yaml` into the git repository.
+- It does not print OAuth tokens, LINE tokens, or Notion tokens. A credential file that sits inside the repo is ignored and the test stays simulated.
+
+### Limits of this submission
+
+- Simulated checks do not prove a real Google, LINE, Linktree, Instagram, or Canva account works. A green **已通過** on Google or Gmail only means a token file outside the repo was readable JSON.
+- LINE's green result only means a token and a group ID are configured. The test does not push.
+- Linktree's test does not log in. Instagram's test runs `adb devices` at most, and never taps the phone.
+- Module on/off is stored for the club. It does not change the existing pipeline, on purpose.
+- The sample lecture is the included 2026-11-25 demo event, not a new club's real calendar.
+- The private folder on Windows uses the name `創創社-私密`, same as the rest of this project. Set `AUTOPILOT_PRIVATE_DIR` if you want a different folder.
+
 ## Safety design
 
 - **Run all never publishes.** Its confirm dialog says so: nothing is emailed, posted or sent from that button.
@@ -105,10 +206,10 @@ See `autopilot/local_settings.py` for the format. Without these settings, the pr
 ## Tests
 
 ```bash
-pytest -q        # 122 tests
+pytest -q        # 135 tests
 ```
 
-Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, and run-all ordering.
+Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, and the module catalog.
 
 ## Honest disclosures
 

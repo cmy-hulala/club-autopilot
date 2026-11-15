@@ -410,6 +410,11 @@ def _py_repl(r: str) -> str:
     return re.sub(r"\$(\d)", r"\\g<\1>", r)
 
 
+from .launchpad_i18n import EN as _LP_EN, EXTRA_PATTERNS as _LP_PATTERNS, T as _LP_T
+
+PHRASES.update({_LP_T[k]: _LP_EN[k] for k in _LP_T})
+PATTERNS.extend(_LP_PATTERNS)
+
 _PATS = [(re.compile(p), _py_repl(r)) for p, r in PATTERNS]
 _KEYS = sorted(PHRASES, key=len, reverse=True)
 _BIG = re.compile("|".join(re.escape(k) for k in _KEYS))

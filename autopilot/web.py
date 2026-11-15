@@ -12,9 +12,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from flask import Flask, abort, jsonify, redirect, request, send_from_directory, url_for
+from flask import Flask, Response, abort, jsonify, redirect, request, send_from_directory, url_for
 
-from . import checker, ig_music
+from . import checker, ig_music, launchpad
 from .event import Event, build_event, load_event
 from .pipeline import ROOT, run_pipeline
 
@@ -1333,10 +1333,26 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
                 return _send(path.parent, name)
         abort(404)
 
-    def render_dashboard(ctx: dict) -> str:
+    def render_page(name: str, **ctx) -> str:
         from . import i18n
-        ctx = {**ctx, "lang": i18n.lang_from(request.cookies), "i18n_json": i18n.payload()}
-        return app.jinja_env.get_template("dashboard.html").render(**ctx)
+        from .launchpad_i18n import T as ui
+        ctx = {**ctx, "lang": i18n.lang_from(request.cookies), "i18n_json": i18n.payload(), "ui": ui}
+        return app.jinja_env.get_template(name).render(**ctx)
+
+    def render_dashboard(ctx: dict) -> str:
+        try:
+            show = launchpad.needs_onboarding()
+        except Exception:
+            show = False
+        return render_page("dashboard.html", **{**ctx, "show_onboarding": show})
+
+    def _store() -> launchpad.Store:
+        return launchpad.Store(out_root, root)
+
+    def _onboarding_body(store: launchpad.Store, progress: dict, errors: list | None = None) -> str:
+        view = launchpad.wizard_view(progress, errors)
+        launchpad.attach_config_path(view, store, progress)
+        return render_page("onboarding.html", **view)
 
     @app.get("/")
     def index():
@@ -1774,6 +1790,71 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
     def linktree_alias(slug):
         start_action(slug, "linktree")
         return redirect(url_for("show_event", slug=slug, msg="正在背景同步 Linktree…"))
+
+    @app.get("/onboarding/template.yaml")
+    def onboarding_template():
+        body = launchpad.blank_template_yaml()
+        return Response(
+            body,
+            mimetype="text/yaml; charset=utf-8",
+            headers={"Content-Disposition": "attachment; filename=autopilot_local.template.yaml"},
+        )
+
+    @app.get("/onboarding")
+    def onboarding_page():
+        try:
+            store = _store()
+        except launchpad.UnsafeConfigPath:
+            abort(400)
+        return _onboarding_body(store, store.load_progress())
+
+    @app.post("/onboarding")
+    def onboarding_submit():
+        try:
+            store = _store()
+        except launchpad.UnsafeConfigPath:
+            abort(400)
+        progress = store.load_progress()
+        progress, errors = launchpad.handle_action(progress, request.form, store)
+        store.save_progress(progress)
+        if errors:
+            return _onboarding_body(store, progress, errors), 400
+        return redirect(url_for("onboarding_page"))
+
+    @app.get("/modules")
+    def modules_page():
+        try:
+            store = _store()
+        except launchpad.UnsafeConfigPath:
+            abort(400)
+        focus = request.args.get("focus") or ""
+        notice = request.args.get("notice") or ""
+        return render_page("modules.html", **launchpad.modules_view(store.load_modules(), focus=focus, notice=notice))
+
+    @app.post("/modules/<module_id>")
+    def modules_submit(module_id):
+        if module_id not in launchpad.MODULE_IDS:
+            abort(404)
+        try:
+            store = _store()
+        except launchpad.UnsafeConfigPath:
+            abort(400)
+        state = store.load_modules()
+        state, banner = launchpad.handle_module(state, module_id, request.form)
+        if banner.get("errors"):
+            view = launchpad.modules_view(state, focus=module_id, banner=banner)
+            return render_page("modules.html", **view), 400
+        store.save_modules(state)
+        action = (request.form.get("action") or "").strip()
+        if action == "toggle":
+            notice = "on" if state[module_id]["enabled"] else "off"
+        elif action == "test":
+            notice = "tested"
+        elif action == "save":
+            notice = "saved"
+        else:
+            notice = ""
+        return redirect(url_for("modules_page", focus=module_id, notice=notice) + "#mod-" + module_id)
 
     return app
 

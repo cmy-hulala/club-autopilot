@@ -13,6 +13,9 @@ html[data-lang="en"]:not(.i18n-ready) body{visibility:hidden}
 .langsw{margin-left:auto;display:flex;gap:4px}
 .langsw button{background:transparent;color:#bbb;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
 .langsw button.on{background:var(--gold-soft);color:#111;border-color:var(--gold-soft);font-weight:700}
+.topnav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.topnav a{color:#fff;text-decoration:none;border:1px solid #444;border-radius:999px;padding:4px 10px;font-size:13px}
+.topnav a:hover{border-color:var(--gold-soft);color:var(--gold-soft)}
 
 :root{
   --bg:#f6f1e8; --card:#fff; --ink:#1a1a1a; --muted:#6b645a;
@@ -25,7 +28,7 @@ html[data-lang="en"]:not(.i18n-ready) body{visibility:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.5}
 a{color:var(--brown)}
-header.top{background:#111;color:#fff;padding:16px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+header.top{background:#111;color:#fff;padding:16px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
 header.top img{height:44px;background:#fff;border-radius:8px;padding:3px}
 header.top b{color:var(--gold-soft);font-size:20px}
 header.top .sub{color:#bbb;font-size:13px;margin-top:2px}
@@ -105,15 +108,10 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 </style>
 </head>
 <body>
-<header class="top">
-  <img src="/asset/club_logo.png" alt="創創社">
-  <div>
-    <b>Club Autopilot</b> · 陽明交大創創社社課自動化
-  </div>
-  <div class="langsw" data-no-i18n><button type="button" data-setlang="zh">中文</button><button type="button" data-setlang="en">English</button></div>
-</header>
+{% include "_top.html" %}
 <main>
 {% if msg %}<div class="flash">{{ msg }}</div>{% endif %}
+{% if show_onboarding %}<p class="flash"><a href="/onboarding">{{ ui.first_time }}</a></p>{% endif %}
 
 <div class="card">
   <h2>① 從 Notion 匯入</h2>
@@ -217,7 +215,7 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
   <div class="ig" id="story-shots" style="margin-top:8px">{% for sh in ig_story.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
   <p class="muted" id="announce-note" style="margin:8px 0 0">{% if announce.sent_at %}預告信已寄出：{{ announce.sent_at }}（Gmail {{ announce.message_id }}）{% endif %}</p>
   <p class="muted" id="line-note" style="margin:8px 0 0">
-    {% if not line.configured %}LINE 未設定：缺少 {{ line.missing|join("、") }}（設環境變數，或放在 {{ line.config_file }}；不放 repo）。
+    {% if not line.configured %}LINE 未設定：缺少 {{ line.missing|join("、") }}（設環境變數，或放在 <span data-no-i18n>{{ line.config_file }}</span>；不放 repo）。
     {% elif not line.text %}還沒有 LINE 文案。
     {% elif line.last_at %}上次發送：{{ line.last_at }}{% if line.last_same %}（同一份文案）{% endif %}。
     {% endif %}
@@ -655,59 +653,6 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
   if (slug) poll();
 })();
 </script>
-<script id="i18n-data" type="application/json">{{ i18n_json|safe }}</script>
-<script>
-(function(){
-  const root = document.documentElement;
-  const lang = root.dataset.lang === "en" ? "en" : "zh";
-  document.querySelectorAll("[data-setlang]").forEach(b => {
-    b.classList.toggle("on", b.dataset.setlang === lang);
-    b.addEventListener("click", () => {
-      try { localStorage.setItem("lang", b.dataset.setlang); } catch (e) {}
-      document.cookie = "lang=" + b.dataset.setlang + ";path=/;max-age=31536000";
-      location.reload();
-    });
-  });
-  if (lang !== "en") { root.classList.add("i18n-ready"); return; }
-  const D = JSON.parse(document.getElementById("i18n-data").textContent);
-  const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const keys = Object.keys(D.phrases).sort((a, b) => b.length - a.length);
-  const big = new RegExp(keys.map(reEsc).join("|"), "g");
-  const pun = new RegExp(Object.keys(D.punct).map(reEsc).join("|"), "g");
-  const pats = D.patterns.map(([p, r]) => [new RegExp(p, "g"), r]);
-  const has = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/;
-  function tr(text) {
-    if (!text || !has.test(text)) return text;
-    const lead = text.match(/^\s*/)[0], trail = text.match(/\s*$/)[0];
-    let t = text.trim();
-    for (const [rx, rep] of pats) t = t.replace(rx, rep);
-    t = t.replace(big, m => D.phrases[m]).replace(pun, m => D.punct[m]);
-    t = t.replace(/ {2,}/g, " ").replace(/ ([,.;:)])/g, "$1").replace(/\( /g, "(").trim();
-    return lead + t + trail;
-  }
-  window.T = tr;
-  const skip = el => !el || el.closest("[data-no-i18n],script,style,textarea");
-  function run(node) {
-    if (node.nodeType === 3) { if (!skip(node.parentElement)) { const v = tr(node.nodeValue); if (v !== node.nodeValue) node.nodeValue = v; } return; }
-    if (node.nodeType !== 1 || skip(node)) return;
-    for (const a of ["placeholder", "title", "alt", "aria-label", "data-confirm"]) {
-      if (node.hasAttribute && node.hasAttribute(a)) { const v = tr(node.getAttribute(a)); if (v !== node.getAttribute(a)) node.setAttribute(a, v); }
-    }
-    if (node.tagName === "INPUT" && (node.type === "submit" || node.type === "button")) node.value = tr(node.value);
-    node.childNodes.forEach(run);
-  }
-  run(document.body);
-  document.title = tr(document.title);
-  const oc = window.confirm.bind(window), oa = window.alert.bind(window);
-  window.confirm = m => oc(tr(String(m)));
-  window.alert = m => oa(tr(String(m)));
-  new MutationObserver(ms => ms.forEach(m => {
-    if (m.type === "characterData") run(m.target);
-    else if (m.type === "attributes") run(m.target);
-    else m.addedNodes.forEach(run);
-  })).observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "data-confirm"]});
-  root.classList.add("i18n-ready");
-})();
-</script>
+{% include "_i18n.html" %}
 </body>
 </html>
