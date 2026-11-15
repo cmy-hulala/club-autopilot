@@ -26,3 +26,4 @@ line_bot.json
 config/local.yaml
 # demo video, raw recordings, Devpost drafts
 demo/
+autopilot_local.yaml
