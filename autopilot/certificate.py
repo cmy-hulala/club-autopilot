@@ -42,6 +42,12 @@ FONTS = ROOT / "assets" / "fonts"
 FRAME = BACKGROUND
 
 CANVA_TEMPLATE_DESIGN = "DAGzIgWU-E4"
+
+
+def certificate_template_id() -> str:
+    """Local private config can replace the built-in certificate template. The constant stays the default."""
+    from .canva_templates import cert_template_id
+    return cert_template_id()
 CANVA_TEMPLATE_PAGE = 1
 CANVA_BLANK_DESIGN = "DAHa96agpic"  # copy of page 1 with the variable texts deleted -> certificate_bg.png
 CONNECTOR_STEPS = (

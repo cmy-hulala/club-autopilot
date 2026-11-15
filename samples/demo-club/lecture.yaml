@@ -1,0 +1,65 @@
+# Fictional lecture for onboarding and dry-run. Not a real club, speaker, or event.
+# Real club data stays in tests/fixtures/ and is not imported by the wizard.
+club:
+  name_zh: 示範大學創業社
+  name_en: Demo University Startup Club
+  short: 示範大學創業社
+  email: hello@example.com
+  instagram: https://example.com/demo-university-startup
+  ig_handle: "@demo.startup"
+  logo_url: https://example.com/demo-university-startup-club-logo.png
+  linktree_url: https://example.com/demo-startup-links
+
+semester: demo-1
+session_no: 1
+title: 從一個點子到第一位使用者：示範大學的創業入門
+short_title: 從點子到第一位使用者
+speaker:
+  name: 林可恩 Avery Lin
+  name_zh: 林可恩
+  name_en: Avery Lin
+  title: 示範新創共同創辦人
+  other_roles: [示範大學創業講師]
+  links:
+    instagram: https://example.com/avery-lin
+    website: https://example.com/avery-lin
+date: 2027-06-16
+start: "19:00"
+end: "21:00"
+campus: 示範大學主校區
+room: 創業教室 101
+deadline: 2027-06-15 23:59
+schedule:
+  - ["19:00", "19:20", 開場、互相認識]
+  - ["19:20", "20:20", 主題分享]
+  - ["20:20", "20:40", 提問]
+  - ["20:40", "21:00", 自由交流]
+hook: 如果下週只能驗證一件事，你會先問誰？
+hook_lead: "{session}，我們邀請虛構講者林可恩，用一個完全示範的故事說明怎麼把點子講給第一位使用者聽。"
+intro:
+  - 林可恩是這份範例裡的虛構講者，用來示範社團流程，不是真人。
+  - 這堂課走一遍從問題、訪談到一個最小實驗的順序。
+  - 你可以把這份檔案複製出去，改成自己社團的標題、講者和教室。
+highlights:
+  - title: 怎麼把一個大點子收成一個可以問人的問題？
+    body: 用一個虛構的校園點子，練習把想法寫成別人聽得懂的一句話。
+  - title: 第一位使用者可能就在隔壁教室
+    body: 示範怎麼約一次短訪談，以及要問哪些不帶答案的問題。
+  - title: 一個週末能做完的小實驗
+    body: 不需要公司、資金或真實客戶名單，也能走完一次最小驗證。
+closing: 這是虛構範例。試完預覽之後，換成你自己的社課。
+feedback_questions:
+  - 我知道下一步可以去問的一個具體問題
+  - 我比較清楚怎麼安排一次短訪談
+form_url: ""
+form_short_url: ""
+feedback_prefill_url: ""
+slides_url: ""
+photo: samples/demo-club/speaker.png
+canva:
+  template_design_id: DAHSJ-8pyXw
+  pages: [1, 2, 3, 4]
+  qr_page: 4
+  exported_dir: assets/canva_export/demo-club
+assumed: []
+logo_file: samples/demo-club/logo.png

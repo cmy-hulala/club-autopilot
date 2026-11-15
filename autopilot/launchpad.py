@@ -144,12 +144,36 @@ def config_destination() -> Path:
 
 
 def sample_source(root: Path | None = None) -> Path:
+    """Fictional lecture used by onboarding. The real club fixture stays in tests/ only."""
     root = Path(root or ROOT)
-    for rel in ("tests/fixtures/2026-11-25-candice.yaml", "samples/notion_export/2026-11-25-candice.yaml"):
-        path = root / rel
-        if path.is_file():
-            return path
-    return root / "tests" / "fixtures" / "2026-11-25-candice.yaml"
+    path = root / "samples" / "demo-club" / "lecture.yaml"
+    if path.is_file():
+        return path
+    return root / "samples" / "demo-club" / "lecture.yaml"
+
+
+def sample_preview(root: Path | None = None) -> dict:
+    """Key fields shown on the import step. Empty strings if the file cannot be read."""
+    blank = {"club": "", "title": "", "speaker": "", "date": "", "place": ""}
+    path = sample_source(root)
+    if not path.is_file():
+        return blank
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return blank
+    if not isinstance(raw, dict):
+        return blank
+    club = raw.get("club") if isinstance(raw.get("club"), dict) else {}
+    speaker = raw.get("speaker") if isinstance(raw.get("speaker"), dict) else {}
+    place = f"{raw.get('campus') or ''} {raw.get('room') or ''}".strip()
+    return {
+        "club": str(club.get("name_zh") or club.get("name_en") or ""),
+        "title": str(raw.get("title") or ""),
+        "speaker": str(speaker.get("name") or ""),
+        "date": str(raw.get("date") or ""),
+        "place": place,
+    }
 
 
 def needs_onboarding() -> bool:
@@ -180,11 +204,17 @@ def fresh_progress() -> dict:
             "tagline": "",
         },
         "services": {
-            "google": {"forms_account": "", "club_email": "", "last_check": None},
-            "line": {"group_name": "", "group_id": "", "last_check": None},
-            "linktree": {"url": "", "last_check": None},
-            "instagram": {"adb_serial": "", "last_check": None},
-            "canva": {"note": "", "last_check": None},
+            "google": {"forms_account": "", "club_email": "", "last_check": None, "has_account": "", "guide_done": ""},
+            "line": {
+                "group_name": "", "group_id": "", "last_check": None, "has_account": "", "guide_done": "",
+                "token_saved": "", "bot_name": "", "bot_picture": "", "token_mask": "",
+            },
+            "linktree": {"url": "", "last_check": None, "has_account": "", "guide_done": ""},
+            "instagram": {"adb_serial": "", "last_check": None, "has_account": "", "guide_done": ""},
+            "canva": {
+                "note": "", "last_check": None, "has_account": "", "guide_done": "",
+                "ig_template": "", "cert_template": "", "use_sample": "",
+            },
         },
         "sample": {"imported": False, "slug": "", "path_name": ""},
         "dry_run": {"ran": False, "ok": False, "sent": False, "message": "", "detail": "", "steps": 0, "slug": ""},
@@ -352,7 +382,8 @@ def _merge_progress(saved: dict) -> dict:
             if key == "last_check":
                 bucket["last_check"] = _known_check(raw.get("last_check"))
             elif isinstance(raw.get(key), str):
-                bucket[key] = _clip(raw[key])
+                limit = 800 if key in ("bot_picture", "ig_template", "cert_template") else 300
+                bucket[key] = _clip(raw[key], limit)
     sample = saved.get("sample") if isinstance(saved.get("sample"), dict) else {}
     if sample.get("path_name") == SAMPLE_NAME and sample.get("slug") == SAMPLE_SLUG and sample.get("imported"):
         base["sample"] = {"imported": True, "slug": SAMPLE_SLUG, "path_name": SAMPLE_NAME}
@@ -422,6 +453,8 @@ def build_config(progress: dict, modules: dict) -> dict:
         "linktree_url": progress["services"]["linktree"]["url"].strip(),
         "ig_adb_serial": progress["services"]["instagram"]["adb_serial"].strip(),
         "canva_note": progress["services"]["canva"]["note"].strip(),
+        "canva_ig_template_design_id": _saved_ig_template(progress),
+        "canva_cert_template_design_id": _saved_cert_template(progress),
         "onboarding_completed": True,
         "dry_run_sent": False,
         "sample_event": progress["sample"]["slug"],
@@ -527,16 +560,24 @@ def _service_errors(step: str, bucket: dict) -> list[str]:
     if step == "instagram":
         return validate_settings("instagram", {"adb_serial": bucket["adb_serial"]})
     if step == "canva":
-        return validate_settings("canva", {"note": bucket["note"]})
+        from .canva_templates import design_id_from_text
+        errors = validate_settings("canva", {"note": bucket["note"]})
+        if bucket.get("use_sample") != "1" and bucket.get("ig_template") and not design_id_from_text(bucket["ig_template"]):
+            errors.append(T["err_canva_url"])
+        if bucket.get("cert_template") and not design_id_from_text(bucket["cert_template"]):
+            errors.append(T["err_canva_url"])
+        return errors
     return []
 
 
 def _assign_service(progress: dict, step: str, form: Mapping) -> None:
     bucket = progress["services"][step]
-    keys = [k for k in bucket if k != "last_check"]
     changed = False
-    for key in keys:
-        value = _clip(form.get(key) or "")
+    for key in list(bucket):
+        if key == "last_check" or key not in form:
+            continue
+        limit = 800 if key in ("bot_picture", "ig_template", "cert_template") else 300
+        value = _clip(form.get(key) or "", limit)
         if bucket.get(key) != value:
             bucket[key] = value
             changed = True
@@ -618,9 +659,61 @@ def _seed_modules(state: dict, progress: dict) -> dict:
     return state
 
 
+GUIDE_ITEMS = {
+    "google": {"signup"},
+    "line": {"create_oa", "messaging_api", "issue_token", "group_settings"},
+    "linktree": {"signup"},
+    "instagram": {"usb"},
+    "canva": {"signup", "no_template"},
+}
+
+
+def _saved_ig_template(progress: dict) -> str:
+    from .canva_templates import design_id_from_text, ig_template_id
+    bucket = progress["services"]["canva"]
+    if bucket.get("use_sample") == "1" or "no_template" in (bucket.get("guide_done") or "").split(","):
+        if bucket.get("use_sample") == "1":
+            return ig_template_id(use_sample=True)
+    return design_id_from_text(bucket.get("ig_template") or "")
+
+
+def _saved_cert_template(progress: dict) -> str:
+    from .canva_templates import design_id_from_text
+    return design_id_from_text(progress["services"]["canva"].get("cert_template") or "")
+
+
+def _guide_action(progress: dict, form: Mapping, action: str, step: str) -> tuple[dict, list[str]]:
+    bucket = progress["services"][step]
+    if action == "skip":
+        bucket["has_account"] = "skip"
+        bucket["last_check"] = {"status": "stub", "message": T["check_skipped"]}
+        _advance(progress)
+        return progress, []
+    if action == "account_choice":
+        choice = _clip(form.get("choice") or "", 16)
+        if choice not in ("yes", "no", "android"):
+            return progress, [T["err_unknown"]]
+        bucket["has_account"] = choice
+        return progress, []
+    item = _clip(form.get("item") or "", 40)
+    if item not in GUIDE_ITEMS.get(step, ()):
+        return progress, [T["err_unknown"]]
+    done = [part for part in (bucket.get("guide_done") or "").split(",") if part]
+    if item not in done:
+        done.append(item)
+    bucket["guide_done"] = ",".join(done)
+    if step == "canva" and item == "no_template":
+        bucket["use_sample"] = "1"
+    return progress, []
+
+
 def handle_action(progress: dict, form: Mapping, store: Store) -> tuple[dict, list[str]]:
     action = _clip(form.get("action") or "", 40)
     posted = _clip(form.get("step") or "", 40)
+    if action in {"skip", "account_choice", "guide_done"}:
+        if posted != progress["current"] or posted not in SERVICE_STEPS:
+            return progress, [T["err_stay"]]
+        return _guide_action(progress, form, action, posted)
     if action == "reset":
         return fresh_progress(), []
     if action == "back":
@@ -771,14 +864,19 @@ def wizard_view(progress: dict, errors: list[str] | None = None) -> dict:
         bucket = progress["services"]["line"]
         fields = [
             _field("group_name", T["group_name"], bucket["group_name"]),
-            _field("group_id", T["group_id"], bucket["group_id"]),
+            _field("group_id", T["line_manual_label"], bucket["group_id"]),
         ]
     elif current == "linktree":
         fields = [_field("url", T["linktree_url"], progress["services"]["linktree"]["url"], "url")]
     elif current == "instagram":
-        fields = [_field("adb_serial", T["phone_serial"], progress["services"]["instagram"]["adb_serial"])]
+        fields = [_field("adb_serial", T["ig_serial_label"], progress["services"]["instagram"]["adb_serial"])]
     elif current == "canva":
-        fields = [_field("note", T["template_note"], progress["services"]["canva"]["note"])]
+        bucket = progress["services"]["canva"]
+        fields = [
+            _field("ig_template", T["canva_ig_label"], bucket.get("ig_template") or ""),
+            _field("cert_template", T["canva_cert_label"], bucket.get("cert_template") or ""),
+            _field("note", T["canva_note_optional"], bucket["note"]),
+        ]
     notice = None
     if current in SERVICE_STEPS:
         check = progress["services"][current].get("last_check")
@@ -809,6 +907,7 @@ def wizard_view(progress: dict, errors: list[str] | None = None) -> dict:
             "show_back": index > 0,
             "show_next": current not in {"done"},
             "show_test": current in SERVICE_STEPS,
+            "show_skip": current in SERVICE_STEPS,
             "show_import": current == "sample",
             "show_dry": current == "dryrun",
             "show_finish": current == "done",
@@ -823,6 +922,26 @@ def wizard_view(progress: dict, errors: list[str] | None = None) -> dict:
         "review": review,
         "config_path": "",
         "show_config_path": False,
+        "guide": _guide_for(progress, current),
+        "sample_card": sample_preview() if current == "sample" else {"club": "", "title": "", "speaker": "", "date": "", "place": ""},
+    }
+
+
+def _guide_for(progress: dict, step: str) -> dict:
+    if step not in SERVICE_STEPS:
+        return {"choice": "", "done": [], "token_saved": False, "bot_name": "", "bot_picture": "", "token_mask": "", "use_sample": False}
+    bucket = progress["services"][step]
+    picture = bucket.get("bot_picture") or ""
+    if not str(picture).startswith("https://"):
+        picture = ""
+    return {
+        "choice": bucket.get("has_account") or "",
+        "done": [part for part in (bucket.get("guide_done") or "").split(",") if part],
+        "token_saved": bucket.get("token_saved") == "yes",
+        "bot_name": bucket.get("bot_name") or "",
+        "bot_picture": picture,
+        "token_mask": bucket.get("token_mask") or "",
+        "use_sample": bucket.get("use_sample") == "1",
     }
 
 

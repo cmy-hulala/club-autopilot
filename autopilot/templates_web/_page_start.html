@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Club Autopilot · {{ title }}</title>
+<link rel="icon" href="/favicon.ico" type="image/png">
 <script>
 (function(){ try { var l = localStorage.getItem("lang"); if (l === "en" || l === "zh") { document.documentElement.dataset.lang = l;
   document.cookie = "lang=" + l + ";path=/;max-age=31536000"; } } catch (e) {} })();
@@ -27,9 +28,17 @@ header.top b{color:var(--gold-soft);font-size:20px}
 .langsw button{background:transparent;color:#bbb;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
 .langsw button.on{background:var(--gold-soft);color:#111;border-color:var(--gold-soft);font-weight:700}
 .topnav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.topnav a{color:#fff;text-decoration:none;border:1px solid #444;border-radius:999px;padding:4px 10px;font-size:13px}
+.topnav a{color:#fff;text-decoration:none;border:1px solid #444;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700}
 .topnav a:hover{border-color:var(--gold-soft);color:var(--gold-soft)}
-main{max-width:980px;margin:0 auto;padding:22px 20px 80px}
+main{max-width:1100px;margin:0 auto;padding:22px 20px 80px}
+.page-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+.page-main{min-width:0}
+.action-col{display:flex;flex-direction:column;gap:8px;position:sticky;top:88px}
+.action-col form{margin:0}
+.action-col .btn,.card-actions .btn{width:100%}
+.card-split{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
+.card-actions{display:flex;flex-direction:column;gap:8px}
+.card-actions form{margin:0}
 h1{margin:0 0 8px;font-size:24px;color:var(--brown)}
 h2{margin:0;font-size:18px;color:var(--brown)}
 .muted{color:var(--muted);font-size:13px}
@@ -41,9 +50,10 @@ h2{margin:0;font-size:18px;color:var(--brown)}
   background:var(--gold);color:#fff;border:0;border-radius:8px;padding:10px 18px;
   font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;font-family:inherit}
 .btn:hover{filter:brightness(1.05)}
+.btn:focus-visible{outline:3px solid #111;outline-offset:2px}
 .btn.ghost{background:#fff;color:var(--brown);border:1px solid var(--gold)}
 .btn.dark{background:#111}
-.btn.sm{padding:6px 12px;font-size:13px}
+.btn.sm{padding:10px 18px;font-size:14px}
 label.field{display:block;margin:0 0 12px}
 label.field span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
 input{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:inherit;background:#fff}
@@ -51,20 +61,28 @@ input{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:i
 .banner.ok{background:var(--ok-bg);color:var(--ok)}
 .banner.warn{background:var(--warn-bg);color:var(--warn)}
 .banner.err{background:var(--err-bg);color:var(--err)}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.pill{display:inline-block;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700}
 .p-ok{background:var(--ok-bg);color:var(--ok)}
 .p-warn{background:var(--warn-bg);color:var(--warn)}
 .p-err{background:var(--err-bg);color:var(--err)}
 .p-idle{background:var(--idle-bg);color:var(--idle)}
 .steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}
 .steps form{margin:0}
-.steps button,.steps span{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font:inherit;color:var(--muted)}
+.steps button,.steps span{border:1px solid var(--gold);background:#fff;color:var(--brown);border-radius:8px;padding:10px 14px;font:inherit;font-weight:700;font-size:14px}
 .steps button{cursor:pointer}
 .steps .on button{background:#111;color:#fff;border-color:#111}
 .steps .done button{border-color:var(--ok);color:var(--ok)}
-.swatch{height:10px;border-radius:999px;margin:4px 0 14px}
+.swatch{height:10px;border-radius:8px;margin:4px 0 14px}
+.preview-card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:#faf8f4;margin:12px 0}
+.preview-card dt{color:var(--muted);font-size:13px}
+.preview-card dd{margin:0 0 8px}
 code{font-size:13px}
-@media (max-width:720px){header.top{padding:12px 14px}.langsw{margin-left:0}}
+@media (max-width:800px){
+  header.top{padding:12px 14px}
+  .langsw{margin-left:0}
+  .page-layout,.card-split{grid-template-columns:1fr}
+  .action-col{position:static}
+}
 </style>
 </head>
 <body>

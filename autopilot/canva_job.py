@@ -144,13 +144,14 @@ def plan(ev: Event) -> dict:
     }
     cert = [{"find": CERT_TEMPLATE_TEXT[k], "replace": cert_new[k]} for k in CERT_TEMPLATE_TEXT]
     cv = r.get("canva") or {}
+    from .canva_templates import cert_template_id, ig_template_id
     return {
-        "ig": {"template": cv.get("template_design_id") or IG_TEMPLATE, "pages": IG_TEMPLATE_PAGES,
+        "ig": {"template": ig_template_id(cv.get("template_design_id") or ""), "pages": IG_TEMPLATE_PAGES,
                "title": f"IG 社課介紹#{r.get('session_no')} {zh}（{d.isoformat()}）", "replace": ig,
                "photo_page": 1,
                # every title box gets the same two-line title and the page-1 box width
                "title_find": t["title"], "title_text": ig_title_two_lines(ev)},
-        "cert": {"template": cv.get("certificate_template_id") or CERT_TEMPLATE, "pages": CERT_TEMPLATE_PAGES,
+        "cert": {"template": cert_template_id(cv.get("certificate_template_id") or ""), "pages": CERT_TEMPLATE_PAGES,
                  "title": f"感謝狀 {zh}（{d.isoformat()}）", "replace": cert},
         "photo": str(r.get("photo") or ""),
         "exported_dir": str(cv.get("exported_dir") or f"assets/canva_export/{d.isoformat()}"),

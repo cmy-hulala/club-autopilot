@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Club Autopilot · {{ ev.session_label if ev else "從 Notion 匯入" }}</title>
+<link rel="icon" href="/favicon.ico" type="image/png">
 <script>
 (function(){ try { var l = localStorage.getItem("lang"); if (l === "en" || l === "zh") { document.documentElement.dataset.lang = l;
   document.cookie = "lang=" + l + ";path=/;max-age=31536000"; } } catch (e) {} })();
@@ -14,7 +15,7 @@ html[data-lang="en"]:not(.i18n-ready) body{visibility:hidden}
 .langsw button{background:transparent;color:#bbb;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px}
 .langsw button.on{background:var(--gold-soft);color:#111;border-color:var(--gold-soft);font-weight:700}
 .topnav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.topnav a{color:#fff;text-decoration:none;border:1px solid #444;border-radius:999px;padding:4px 10px;font-size:13px}
+.topnav a{color:#fff;text-decoration:none;border:1px solid #444;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700}
 .topnav a:hover{border-color:var(--gold-soft);color:var(--gold-soft)}
 
 :root{
@@ -33,6 +34,11 @@ header.top img{height:44px;background:#fff;border-radius:8px;padding:3px}
 header.top b{color:var(--gold-soft);font-size:20px}
 header.top .sub{color:#bbb;font-size:13px;margin-top:2px}
 main{max-width:1200px;margin:0 auto;padding:22px 20px 80px}
+.page-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+.page-main{min-width:0}
+.action-col{display:flex;flex-direction:column;gap:8px;position:sticky;top:88px}
+.action-col form,.action-col .btn{width:100%}
+.action-col form{margin:0}
 .flash{background:var(--warn-bg);border:1px solid #e0c060;padding:10px 14px;border-radius:10px;margin-bottom:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
 h2{margin:0 0 14px;font-size:17px;color:var(--brown);letter-spacing:.02em}
@@ -46,9 +52,10 @@ h3{margin:18px 0 8px;font-size:15px}
   font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;font-family:inherit}
 .btn:hover{filter:brightness(1.05)}
 .btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible{outline:3px solid #111;outline-offset:2px}
 .btn.dark{background:#111}
 .btn.ghost{background:#fff;color:var(--brown);border:1px solid var(--gold)}
-.btn.sm{padding:6px 12px;font-size:13px}
+.btn.sm{padding:10px 18px;font-size:14px}
 select,input,textarea{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font:inherit;box-sizing:border-box;background:#fff}
 dialog{border:1px solid var(--line);border-radius:14px;padding:0;max-width:560px;width:calc(100% - 32px)}
 dialog::backdrop{background:rgba(0,0,0,.4)}
@@ -63,9 +70,9 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 .stat .n{font-size:26px;font-weight:800;color:#111;line-height:1.1}
 .stat .l{font-size:12px;color:var(--muted);margin-top:4px}
 .actions{display:flex;flex-direction:column;gap:8px}
-.action{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.action{display:grid;grid-template-columns:auto 28px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .action .name{font-weight:700}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill{display:inline-block;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}
 .p-err{background:var(--err-bg);color:var(--err)}
 .p-warn{background:var(--warn-bg);color:var(--warn)}
 .p-ok{background:var(--ok-bg);color:var(--ok)}
@@ -77,7 +84,7 @@ th,td{border-bottom:1px solid #eee;padding:7px 8px;text-align:left;vertical-alig
 tr.error td{background:var(--err-bg);color:var(--err);font-weight:700}
 tr.warn td{background:var(--warn-bg)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.tabs button{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit}
+.tabs button{background:var(--gold);color:#fff;border:0;border-radius:8px;padding:10px 18px;cursor:pointer;font:inherit;font-weight:700}
 .tabs button.on{background:#111;color:#fff;border-color:#111}
 iframe.preview,object.preview{width:100%;height:620px;border:1px solid var(--line);border-radius:10px;background:#fff;display:block}
 img.cert-img{width:100%;max-width:1000px;border-radius:10px;border:1px solid var(--line);background:#f3efe6;display:block}
@@ -90,7 +97,7 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 .ig figcaption{margin-top:6px;text-align:center}
 .links a{display:inline-block;margin:0 10px 2px 0;font-size:13px}
 .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
-@media (max-width:720px){.edit-grid,.stats,.action{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+@media (max-width:800px){.edit-grid,.stats,.action{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.page-layout{grid-template-columns:1fr}.action-col{position:static}}
 .hidden{display:none}
 .action .no{width:24px;height:24px;border-radius:50%;background:#111;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .action.st-done .no{background:var(--ok)}
@@ -113,10 +120,24 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 {% if msg %}<div class="flash">{{ msg }}</div>{% endif %}
 {% if show_onboarding %}<p class="flash"><a href="/onboarding">{{ ui.first_time }}</a></p>{% endif %}
 
+<div class="page-layout">
+<aside class="action-col" aria-label="{{ ui.nav_label }}">
+  <button type="button" class="btn dark" id="btn-import">從 Notion 匯入</button>
+  {% if ev %}
+  <form method="post" action="/api/run-all/{{ slug }}" id="runall-form">
+    <button class="btn" type="submit" id="btn-runall" {% if runall.busy %}disabled{% endif %}>{% if runall.busy %}執行中…{% else %}▶ 全部執行{% endif %}</button>
+  </form>
+  <button class="btn" type="button" id="btn-line" {% if not line.configured or not line.text %}disabled{% endif %}>LINE 直接發送</button>
+  <button class="btn ghost" type="button" id="btn-announce" {% if not announce.draft_id or announce.sent_at %}disabled{% endif %}>寄出預告信</button>
+  <button class="btn ghost" type="button" id="btn-ig">存成 IG 草稿（手機）</button>
+  <button class="btn ghost" type="button" id="btn-story">轉發貼文到限動（手機）</button>
+  {% endif %}
+</aside>
+<div class="page-main">
+
 <div class="card">
   <h2>① 從 Notion 匯入</h2>
   <div class="row">
-    <button type="button" class="btn dark" id="btn-import">從 Notion 匯入</button>
     {% if ev %}
       <div>
         <b>{{ ev.session_label }}　<span data-no-i18n>{{ ev.title }}</span></b>
@@ -174,21 +195,11 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 <div class="card">
   <h2>② 執行動作</h2>
   <div class="runall">
-    <form method="post" action="/api/run-all/{{ slug }}" id="runall-form">
-      <button class="btn big" type="submit" id="btn-runall" {% if runall.busy %}disabled{% endif %}>{% if runall.busy %}執行中…{% else %}▶ 全部執行{% endif %}</button>
-    </form>
     <span class="muted" id="runall-msg">{% if runall.busy %}正在執行：{{ runall.current_label }}{% elif runall.message %}{{ runall.message }}{% if runall.finished %}（{{ runall.finished }}）{% endif %}{% endif %}</span>
   </div>
   <div class="actions" id="actions">
     {% for act in actions %}
     <div class="action st-{{ act.status }}" data-key="{{ act.key }}">
-      <div class="no">{{ act.no }}</div>
-      <div>
-        <div class="name">{{ act.label }}</div>
-        <div class="muted links" data-role="links">{% for L in act.links %}<a href="{{ L.href }}" target="_blank" rel="noopener">{{ L.label }}</a>{% endfor %}</div>
-        <div class="muted {% if act.status == 'failed' %}msg-failed{% endif %}" data-role="msg">{{ act.message }}</div>
-      </div>
-      <span class="pill {{ act.pill }}" data-role="pill">{{ act.status_label }}</span>
       <div data-role="ctl">
         {% if act.retry %}
         <form method="post" action="/api/action/{{ slug }}/{{ act.key }}" data-action="{{ act.key }}" data-confirm="{{ act.confirm }}">
@@ -196,6 +207,13 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
         </form>
         {% elif act.status == 'done' %}<span class="ok-mark">✓</span>{% endif %}
       </div>
+      <div class="no">{{ act.no }}</div>
+      <div>
+        <div class="name">{{ act.label }}</div>
+        <div class="muted links" data-role="links">{% for L in act.links %}<a href="{{ L.href }}" target="_blank" rel="noopener">{{ L.label }}</a>{% endfor %}</div>
+        <div class="muted {% if act.status == 'failed' %}msg-failed{% endif %}" data-role="msg">{{ act.message }}</div>
+      </div>
+      <span class="pill {{ act.pill }}" data-role="pill">{{ act.status_label }}</span>
     </div>
     {% endfor %}
   </div>
@@ -204,11 +222,6 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
 <div class="card">
   <h2>發布（需要你按）</h2>
   <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-    <button class="btn" type="button" id="btn-line" {% if not line.configured or not line.text %}disabled{% endif %}>LINE 直接發送</button>
-    <button class="btn" type="button" id="btn-announce" {% if not announce.draft_id or announce.sent_at %}disabled{% endif %}>寄出預告信</button>
-    <button class="btn ghost" type="button" id="btn-ig">存成 IG 草稿（手機）</button>
-    <button class="btn ghost" type="button" id="btn-story">轉發貼文到限動（手機）</button>
-  </div>
   <p class="muted" id="ig-note" style="margin:8px 0 0">{% if ig_draft.status %}IG 草稿：{{ ig_draft.message }}{% if ig_draft.at %}（{{ ig_draft.at }}）{% endif %}{% endif %}</p>
   <div class="ig" id="ig-shots" style="margin-top:8px">{% for sh in ig_draft.shot_links %}<figure><a href="{{ sh.href }}" target="_blank" rel="noopener"><img src="{{ sh.href }}" alt="{{ sh.name }}" style="background:#fff"></a><figcaption class="muted">{{ sh.name }}</figcaption></figure>{% endfor %}</div>
   <p class="muted" id="story-note" style="margin:8px 0 0">{% if ig_story.status %}IG 限動：{{ ig_story.message }}{% if ig_story.at %}（{{ ig_story.at }}）{% endif %}{% endif %}</p>
@@ -387,6 +400,8 @@ pre.copy{white-space:pre-wrap;background:#fbfbfb;border:1px solid #eee;padding:1
   <p class="muted" id="line-dlg-note"></p>
 </div></dialog>
 {% endif %}
+</div>
+</div>
 </main>
 <script>
 (function(){

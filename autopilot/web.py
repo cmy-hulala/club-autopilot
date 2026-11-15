@@ -1254,6 +1254,13 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
             "feedback_url": feedback_url,
         }
 
+    @app.get("/favicon.ico")
+    def favicon():
+        logo = root / "assets" / "club_logo.png"
+        if not logo.is_file():
+            abort(404)
+        return send_from_directory(logo.parent, logo.name, mimetype="image/png")
+
     @app.get("/asset/<path:name>")
     def asset(name):
         return send_from_directory(root / "assets", name)
@@ -1855,6 +1862,98 @@ def create_app(root: Path | None = None, out_root: Path | None = None, events_di
         else:
             notice = ""
         return redirect(url_for("modules_page", focus=module_id, notice=notice) + "#mod-" + module_id)
+
+    def _remember_line_bot(info: dict, token: str, secret: str) -> None:
+        from . import line_capture
+        from .launchpad_i18n import T as ui
+        line_capture.save_secrets(token, secret)
+        try:
+            store = _store()
+        except launchpad.UnsafeConfigPath:
+            return
+        progress = store.load_progress()
+        bucket = progress["services"]["line"]
+        bucket["token_saved"] = "yes"
+        bucket["bot_name"] = info.get("display_name") or ""
+        bucket["bot_picture"] = info.get("picture_url") or ""
+        bucket["token_mask"] = info.get("masked") or ""
+        bucket["last_check"] = {"status": "ok", "message": ui["line_token_ok"]}
+        store.save_progress(progress)
+
+    @app.post("/api/line/bot-info")
+    def line_bot_info():
+        from . import line_capture
+        body = request.get_json(silent=True) or {}
+        token = str(body.get("token") or "")
+        secret = str(body.get("secret") or "")
+        info = line_capture.bot_info(token)
+        if info.get("ok") and secret.strip():
+            _remember_line_bot(info, token, secret)
+        elif info.get("ok"):
+            _remember_line_bot(info, token, "")
+        safe = {k: v for k, v in info.items() if k != "masked"}
+        safe["masked"] = info.get("masked") or ""
+        return jsonify(safe), (200 if info.get("ok") else 400)
+
+    @app.post("/api/line/capture/start")
+    def line_capture_start():
+        from . import line_capture
+        port = int(request.environ.get("SERVER_PORT") or 5050)
+        result = line_capture.begin_capture(port)
+        return jsonify(result), (200 if result.get("ok") else 400)
+
+    @app.get("/api/line/capture/status")
+    def line_capture_status():
+        from . import line_capture
+        data = line_capture.snapshot()
+        return jsonify({
+            "group_id": data.get("group_id") or "",
+            "group_name": data.get("group_name") or "",
+            "mode": data.get("mode") or "",
+            "message": data.get("error") or "",
+        })
+
+    @app.post("/api/line/capture/confirm")
+    def line_capture_confirm():
+        from . import line_capture
+        from .launchpad_i18n import T as ui
+        result = line_capture.finish_capture()
+        if result.get("group_id"):
+            try:
+                store = _store()
+                progress = store.load_progress()
+                bucket = progress["services"]["line"]
+                bucket["group_id"] = result["group_id"]
+                bucket["group_name"] = result.get("group_name") or bucket.get("group_name") or ""
+                bucket["last_check"] = {"status": "ok", "message": ui["line_group_saved"]}
+                store.save_progress(progress)
+            except launchpad.UnsafeConfigPath:
+                pass
+        return jsonify(result), (200 if result.get("ok") else 400)
+
+    @app.post("/api/line/webhook")
+    def line_webhook():
+        from . import line_capture
+        raw = request.get_data() or b""
+        secret = str(line_capture.load_secrets().get("channel_secret") or "")
+        header = request.headers.get("X-Line-Signature") or ""
+        if not line_capture.signature_ok(raw, secret, header):
+            return jsonify({"ok": False}), 401
+        try:
+            payload = json.loads(raw.decode("utf-8") or "{}")
+        except Exception:
+            return jsonify({"ok": False}), 400
+        if not isinstance(payload, dict):
+            return jsonify({"ok": False}), 400
+        groups = line_capture.group_ids_from_payload(payload)
+        if groups:
+            line_capture.remember_group(groups[0])
+        return jsonify({"ok": True})
+
+    @app.post("/api/ig/detect")
+    def ig_detect():
+        from .phone_setup import detect
+        return jsonify(detect())
 
     return app
 

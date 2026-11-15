@@ -29,6 +29,11 @@ def config_path() -> Path:
     env = os.environ.get("LINE_BOT_CONFIG")
     if env:
         return Path(env)
+    private = os.environ.get("AUTOPILOT_PRIVATE_DIR")
+    if private:
+        candidate = Path(private) / "line" / "line_bot.json"
+        if candidate.is_file():
+            return candidate
     return Path.home() / "創創社-私密" / "line" / "line_bot.json"
 
 

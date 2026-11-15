@@ -1,12 +1,25 @@
 {% include "_page_start.html" %}
+<div class="page-layout">
+<aside class="action-col" aria-label="{{ ui.nav_label }}">
+  <a class="btn" href="/onboarding">{{ ui.nav_onboarding }}</a>
+  <a class="btn ghost" href="/">{{ ui.nav_dashboard }}</a>
+</aside>
+<div class="page-main">
 <h1>{{ ui.modules_title }}</h1>
 <p>{{ ui.modules_lead }}</p>
-<p class="row">
-  <a class="btn ghost sm" href="/onboarding">{{ ui.nav_onboarding }}</a>
-  <a class="btn ghost sm" href="/">{{ ui.nav_dashboard }}</a>
-</p>
 {% for m in cards %}
 <article class="card{% if focus == m.id %} focus{% endif %}{% if not m.enabled %} off{% endif %}" id="mod-{{ m.id }}">
+  <div class="card-split">
+  <div class="card-actions">
+    <form method="post" action="/modules/{{ m.id }}">
+      <input type="hidden" name="action" value="toggle">
+      <input type="hidden" name="enabled" value="{{ '0' if m.enabled else '1' }}">
+      <button class="btn ghost" type="submit">{{ ui.disable if m.enabled else ui.enable }}</button>
+    </form>
+    <button class="btn" type="submit" form="mod-form-{{ m.id }}" name="action" value="save">{{ ui.save }}</button>
+    <button class="btn ghost" type="submit" form="mod-form-{{ m.id }}" name="action" value="test">{{ ui.test }}</button>
+  </div>
+  <div>
   <div class="row">
     <h2>{{ m.name }}</h2>
     <span class="pill {{ 'p-ok' if m.enabled else 'p-idle' }}">{{ ui.enabled if m.enabled else ui.disabled }}</span>
@@ -21,22 +34,17 @@
     <div class="banner {{ 'ok' if banner.level == 'ok' else ('warn' if banner.level == 'stub' else 'err') }}" role="status">{{ banner.message }}</div>
     {% endif %}
   {% endif %}
-  <form method="post" action="/modules/{{ m.id }}">
-    <input type="hidden" name="action" value="toggle">
-    <input type="hidden" name="enabled" value="{{ '0' if m.enabled else '1' }}">
-    <button class="btn ghost sm" type="submit">{{ ui.disable if m.enabled else ui.enable }}</button>
-  </form>
-  <form method="post" action="/modules/{{ m.id }}" style="margin-top:12px">
+  <form id="mod-form-{{ m.id }}" method="post" action="/modules/{{ m.id }}">
     {% for f in m.fields %}
     <label class="field"><span>{{ f.label }}</span>
       <input name="{{ f.key }}" value="{{ f.value }}" {% if f.kind == 'email' %}type="email"{% else %}type="text"{% endif %}>
     </label>
     {% endfor %}
-    <div class="row">
-      <button class="btn sm" type="submit" name="action" value="save">{{ ui.save }}</button>
-      <button class="btn ghost sm" type="submit" name="action" value="test">{{ ui.test }}</button>
-    </div>
   </form>
+  </div>
+  </div>
 </article>
 {% endfor %}
+</div>
+</div>
 {% include "_page_end.html" %}

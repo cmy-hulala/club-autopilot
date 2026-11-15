@@ -347,6 +347,30 @@ if ($PSScriptRoot) {
     & $venvPy -m pip install -r (Join-Path $repo 'requirements.txt')
     if ($LASTEXITCODE -ne 0) { Fail "無法安裝 requirements.txt。請檢查網路後再貼一次。 / Could not install requirements.txt. Check the network and paste the line again." }
 
+    $adb = $null
+    $adbCmd = Get-Command adb -ErrorAction SilentlyContinue
+    if ($adbCmd -and $adbCmd.Source -and -not (Test-StoreAlias $adbCmd.Source)) { $adb = $adbCmd.Source }
+    $adbHome = Join-Path $env:LOCALAPPDATA 'club-autopilot-tools\platform-tools\adb.exe'
+    if (-not $adb -and (Test-Path -LiteralPath $adbHome)) { $adb = $adbHome }
+    if (-not $adb) {
+        Say "正在下載 Android platform-tools（adb），給 Instagram 的 Android 手機用… / Downloading Android platform-tools (adb) for the Instagram phone step…"
+        $tools = Join-Path $env:LOCALAPPDATA 'club-autopilot-tools'
+        $zip = Join-Path $env:TEMP 'platform-tools-latest-windows.zip'
+        try {
+            Invoke-WebRequest -Uri 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip' -OutFile $zip -UseBasicParsing
+            if (-not (Test-Path -LiteralPath $tools)) { New-Item -ItemType Directory -Path $tools | Out-Null }
+            Expand-Archive -LiteralPath $zip -DestinationPath $tools -Force
+            if (Test-Path -LiteralPath $adbHome) {
+                $env:Path = "$(Split-Path -Parent $adbHome);$env:Path"
+                Say "adb 已放在 $adbHome / adb is at $adbHome"
+            } else {
+                Say "adb 沒有下載完成。Instagram 步驟可以先略過。 / adb did not finish downloading. You can skip the Instagram step."
+            }
+        } catch {
+            Say "adb 沒有下載完成。Instagram 步驟可以先略過。 / adb did not finish downloading. You can skip the Instagram step."
+        }
+    }
+
     Say "正在安裝 Playwright 的 Chromium… / Installing Playwright Chromium…"
     & $venvPy -m playwright install chromium
     if ($LASTEXITCODE -ne 0) { Fail "Playwright Chromium 安裝失敗。請檢查網路後再貼一次。 / Playwright Chromium install failed. Check the network and paste the line again." }
