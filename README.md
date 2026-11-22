@@ -152,7 +152,7 @@ python -m autopilot web --port 5050
 
 On Windows, `python` must be the real install, not the Store alias. If `python` does nothing, use the full path `%LOCALAPPDATA%\Programs\Python\Python312\python.exe`.
 
-Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 150 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
+Open http://127.0.0.1:5050/onboarding . Linux and macOS can skip Playwright until a real Linktree sync or form banner is needed. `pytest -q` runs 152 tests, including onboarding, the module catalog, and a check that `setup.ps1` is present.
 
 ### Run the dashboard
 
@@ -249,10 +249,15 @@ Then go back to http://127.0.0.1:5050 . **在儀表板打開範例活動** opens
 ## Tests
 
 ```bash
-pytest -q        # 150 tests
+pytest -q        # 152 tests
+bash scripts/verify
 ```
 
-Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, the module catalog, and the Windows `setup.ps1` one-liner.
+`bash scripts/verify` is the one-click offline check. On Windows: `powershell -ExecutionPolicy Bypass -File scripts/verify.ps1`. It checks dependencies, starts `python -m autopilot web` on a free port, requests the home page and `/onboarding`, stops the server, and runs this suite. Live Google, LINE, Notion, Linktree, Instagram, and Canva calls are skipped. The last line is `VERIFY PASS` or `VERIFY FAIL`.
+
+Every code change must be verified by running this script, and its output must be included as evidence.
+
+Google, Gmail, LINE, Linktree and adb are all mocked. The tests cover the pipeline, the rule checker, the form banner, the QR stamp, BCC exclusion, the dashboard routes (including confirm and send-once), the i18n of every UI string, IG music and story logic, run-all ordering, the first-time setup wizard, the module catalog, the Windows `setup.ps1` one-liner, and the offline `scripts/verify` check.
 
 ## Honest disclosures
 

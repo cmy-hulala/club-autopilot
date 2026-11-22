@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Offline one-click verification. The check itself is scripts/verify.py.
+#   bash scripts/verify
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+if [[ -x "$ROOT/.venv/bin/python" ]]; then
+  PY="$ROOT/.venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+  PY="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+  PY="$(command -v python)"
+else
+  echo "Python 3 was not found."
+  echo "VERIFY FAIL"
+  exit 1
+fi
+
+set +e
+"$PY" "$ROOT/scripts/verify.py"
+code=$?
+set -e
+exit "$code"
